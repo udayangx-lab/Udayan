@@ -1,0 +1,4 @@
+import fs from 'node:fs';import path from 'node:path';import * as cheerio from 'cheerio';
+const files=fs.readdirSync('out').filter(f=>f.endsWith('.html'));let issues=[];let assets=0;
+for(const file of files){const $=cheerio.load(fs.readFileSync(path.join('out',file),'utf8'));if(!$('title').text())issues.push(file+': missing title');if($('main h1').length!==1)issues.push(file+': expected one h1');$('img[src],a[href]').each((_,e)=>{let url=$(e).attr(e.tagName==='img'?'src':'href');if(!url?.startsWith('/')||url.startsWith('//'))return;url=decodeURIComponent(url.split(/[?#]/)[0]);const base=path.join('out',url);if(!fs.existsSync(base)&&!fs.existsSync(base+'.html')&&!fs.existsSync(path.join(base,'index.html')))issues.push(file+': missing '+url);assets++})}
+console.log(JSON.stringify({pages:files.length,referencesChecked:assets,issues},null,2));if(issues.length)process.exitCode=1;

@@ -1,0 +1,26 @@
+{
+  "name": "udayan-cinema",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "build": "next build --webpack",
+    "start": "python3 scripts/preview.py",
+    "typecheck": "tsc --noEmit",
+    "scrape": "node scripts/scrape.mjs",
+    "check:export": "node scripts/check-export.mjs"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "cheerio": "latest"
+  }
+}
