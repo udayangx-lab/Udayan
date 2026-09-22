@@ -9,7 +9,7 @@ const MotionContext = createContext<((href: string) => boolean) | null>(null);
 const ease = 'cubic-bezier(.22, 1, .36, 1)';
 const revealTargets = [
   '.hero-content > *', '.page-heading .eyebrow', '.page-heading h1', '.page-heading p',
-  '.experience-strip .container > span', '.section-head', '.movie-toolbar', '.movie-card',
+  '.experience-strip .container > span', '.section-head', '.movie-toolbar', '.movie-grid:not(.movie-carousel) > .movie-card', '.movie-carousel', '.movie-carousel-controls',
   '.listings-note', '.feature-photo', '.feature-copy > *', '.venue-card',
   '.cafe-banner .container > div', '.heritage > *', '.wide-photo', '.amenity-grid > article',
   '.inline-cta', '.story-layout > *', '.timeline > article', '.gallery-tile',

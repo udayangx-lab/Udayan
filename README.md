@@ -26,7 +26,7 @@ The `out/` directory is a portable static export. `npm start` serves it locally 
 
 ## Pages
 
-Home, movies, experience, story, gallery, DPD Café, contact/directions, Hooghly River, advertising, careers, and patron feedback. Movie language filters and upcoming tabs work; the cinema selector changes booking destinations. Photo galleries support a native modal, arrow-key navigation, Escape, and touch controls. Mobile navigation, keyboard focus, reduced-motion preferences, and per-page metadata are included.
+Home, movies, experience, story, gallery, DPD Café, contact/directions, Hooghly River, advertising, careers, and patron feedback. The homepage movie section is a swipeable carousel with previous/next buttons, keyboard navigation, and all current/upcoming cards. Movie language filters and upcoming tabs work; the cinema selector changes booking destinations. Photo galleries support a native modal, arrow-key navigation, Escape, and touch controls. Mobile navigation, keyboard focus, reduced-motion preferences, and per-page metadata are included.
 
 ## Content and source accuracy
 

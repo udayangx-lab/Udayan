@@ -77,3 +77,15 @@ html{scrollbar-gutter:stable}
 .button.dark:is(:hover,:focus-visible){background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .gallery-tile>span svg,.poster-action>svg{color:#fff;background:var(--ink);border:1px solid #ffffff66;border-radius:50%;padding:5px;box-sizing:content-box;flex-shrink:0;transition:color 180ms ease,background-color 180ms ease,border-color 180ms ease}
 .gallery-tile:is(:hover,:focus-visible)>span svg,.poster-link:is(:hover,:focus-visible) .poster-action>svg{color:var(--ink);background:#fff;border-color:#fff}
+
+/* Native scrolling keeps the movie carousel responsive to touch and trackpads. */
+.movie-carousel-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-8px 0 18px}
+.carousel-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.carousel-navigation{display:flex;align-items:center;gap:10px}
+.carousel-hint{font-size:12px;color:var(--muted);margin-right:6px}
+.carousel-arrow:disabled{color:#777;background:var(--soft);border-color:var(--line);cursor:default}
+.movie-grid.movie-carousel{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:calc((100% - 75px)/4);gap:25px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#bbb var(--soft);padding:4px 2px 16px;margin-inline:-2px}
+.movie-carousel>.movie-card{min-width:0;scroll-snap-align:start}
+.movie-carousel:focus-visible{outline:2px solid var(--red);outline-offset:6px;border-radius:4px}
+@media(max-width:950px){.movie-grid.movie-carousel{grid-auto-columns:calc((100% - 36px)/3);gap:18px}}
+@media(max-width:650px){.movie-grid.movie-carousel{grid-auto-columns:calc((100% - 22.5px)/2.15);gap:15px}.carousel-hint{display:none}.movie-carousel-controls{margin-top:-8px;margin-bottom:14px}.carousel-count{font-size:11px}.carousel-arrow{width:38px;height:38px}.movie-carousel .poster-action{gap:6px;font-size:10px}.movie-carousel .poster-action>svg{width:14px;height:14px;padding:4px}}
