@@ -46,3 +46,7 @@ Exact source values retained in CSS: main red `#BB0504`, accent `#E7000B`, burgu
 ## Refreshing research
 
 `npm run scrape` fetches the source pages and assets into `research/` and `public/images/`. Review the results and update `lib/data.ts`; scraping deliberately does not silently overwrite curated application content.
+
+## Motion
+
+`components/cinema-preloader.tsx` provides a cinema countdown and opening curtains on initial visits and internal page changes. The initial intro can be skipped; subsequent transitions are shorter. It waits briefly for visible images and fonts, with a maximum timeout, and disables background interaction while loading. `components/site-motion.tsx` provides page entry transitions and staggered IntersectionObserver reveals across all pages, prepared before paint and starting as the curtains open. `components/year-counter.tsx` counts to the original historical year when it enters view, while preserving the accessible final value. Each visual group reveals once; nested opacity animations are avoided, and scrollbar space stays stable during loading. Mobile navigation and gallery dialogs animate open and closed. Motion respects `prefers-reduced-motion`; content stays visible without JavaScript, and a navigation timeout prevents a failed transition from hiding the page.

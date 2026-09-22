@@ -1,0 +1,152 @@
+{
+  "checkedAt": "2026-09-22T16:29:59.892Z",
+  "scope": "Anonymous read-only public listings checks; no sync enabled",
+  "apiTests": [
+    {
+      "provider": "BookMyShow",
+      "url": "https://in.bookmyshow.com/serv/getData?cmd=GETREGIONS",
+      "httpStatus": 403
+    },
+    {
+      "provider": "District",
+      "url": "https://api.edition.in/gw/consumer/movies/v3/cinema?meta=1&reqData=1&cinemaId=1102426",
+      "httpStatus": 401,
+      "message": "Access token not found"
+    }
+  ],
+  "publicPageTests": [
+    {
+      "venue": "Sheoraphuli",
+      "url": "https://www.district.in/movies/udayan-cinema-sheoraphuli-in-howrah-CD1102426",
+      "httpStatus": 200,
+      "cinemaId": "1102426",
+      "extraction": "Public HTML __NEXT_DATA__ JSON; not a documented public API",
+      "sessionDates": [
+        "2026-09-23",
+        "2026-09-24"
+      ],
+      "movies": [
+        {
+          "title": "Hanuman Ansh",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17845327886519115.jpg",
+          "sessionCount": 3,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Daktar Kaku",
+          "languages": "Bengali",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17894227630249797.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Beporoya",
+          "languages": "Bengali",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17893620396161455.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Vibe",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17880933831278466.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Mirzapur: The Movie",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17883239623253823.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        }
+      ]
+    },
+    {
+      "venue": "Tarakeswar",
+      "url": "https://www.district.in/movies/udayan-cinema-tarakeswar-in-hoogly-CD1102427",
+      "httpStatus": 200,
+      "cinemaId": "1102427",
+      "extraction": "Public HTML __NEXT_DATA__ JSON; not a documented public API",
+      "sessionDates": [
+        "2026-09-23"
+      ],
+      "movies": [
+        {
+          "title": "Hanuman Ansh",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17845327886519115.jpg",
+          "sessionCount": 3,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Resident Evil",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17893847181922260.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Beporoya",
+          "languages": "Bengali",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17893620396161455.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        },
+        {
+          "title": "Mirzapur: The Movie",
+          "languages": "Hindi",
+          "formats": [
+            "2D"
+          ],
+          "posterUrl": "https://b.zmtcdn.com/data/edition_assets/17883239623253823.jpg",
+          "sessionCount": 1,
+          "showDates": [
+            "2026-09-23"
+          ]
+        }
+      ]
+    }
+  ]
+}

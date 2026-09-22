@@ -10,7 +10,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = unquote(urlsplit(self.path).path)
         candidate = (ROOT / path.lstrip('/')).resolve()
         if ROOT in candidate.parents and not candidate.suffix and candidate.with_suffix('.html').is_file():
-            self.path = path + '.html'
+            self.path = path.rstrip('/') + '.html'
         elif not candidate.exists() and not candidate.suffix:
             self.send_response(404)
             self.send_header('Content-type', 'text/html; charset=utf-8')
