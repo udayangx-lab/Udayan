@@ -1,0 +1,11 @@
+import {spawn} from 'node:child_process';
+import {syncListings, refreshInterval} from './sync-listings.mjs';
+const dev = process.argv[2] === 'dev';
+const server = dev ? spawn(process.execPath, ['node_modules/next/dist/bin/next','dev','--webpack','--hostname','0.0.0.0'], {stdio: 'inherit'}) : spawn('python3', ['scripts/preview.py'], {stdio: 'inherit'});
+const refresh = () => syncListings().catch(error => console.error('[listings]', error.message));
+void refresh();
+const timer = setInterval(refresh, refreshInterval);
+console.log('[listings] Automatic District refresh enabled: startup + every 30 minutes.');
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { clearInterval(timer); server.kill(signal); });
+server.on('exit', code => { clearInterval(timer); process.exit(code || 0); });
+server.on('error', error => { console.error(error); process.exit(1); });

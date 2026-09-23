@@ -1,15 +1,6 @@
 export const cinemas = [
-  { id: 'sheoraphuli', name: 'Sheoraphuli', since: '1946', address: '35, Grand Trunk Road, Sheoraphuli, Hooghly, West Bengal 712223', phone: '7003697009', parking: 'Two-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/hooghly/udayan-cinema-sheoraphuli/buytickets/UCPL/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Sheoraphuli' },
-  { id: 'tarakeswar', name: 'Tarakeswar', since: '2025', address: '2nd Floor, Silvision Mall, Gure, Tarakeswar, West Bengal 712410', phone: '7679088942', parking: 'Two & four-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/tarkeshwar/udayan-cinema-tarkeshwar/buytickets/UUCT/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Tarakeswar' },
-];
-export const movies = [
- {title:'Resident Evil', language:'Hindi', image:'RESIDENT-EVIL-hindi.jpg'},
- {title:'Resident Evil', language:'English', image:'RESIDENT-EVIL.jpg'},
- {title:'Daktar Kaku', language:'Bangla', image:'DAKTAR-KAKU.jpg'},
- {title:'Beporoya', language:'Hindi', image:'BEPOROYA.jpg'},
- {title:'Vibe', language:'Hindi', image:'VIBE.jpg'},
- {title:'Mirzapur: The Movie', language:'Hindi', image:'MIRZAPUR-THE-MOVIE.jpg'},
- {title:'Hanuman Ans', language:'Hindi', image:'HANUMAN-ANS.jpg'},
+  { id: 'sheoraphuli', district: 'https://www.district.in/movies/udayan-cinema-sheoraphuli-in-howrah-CD1102426', name: 'Sheoraphuli', since: '1946', address: '35, Grand Trunk Road, Sheoraphuli, Hooghly, West Bengal 712223', phone: '7003697009', parking: 'Two-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/hooghly/udayan-cinema-sheoraphuli/buytickets/UCPL/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Sheoraphuli' },
+  { id: 'tarakeswar', district: 'https://www.district.in/movies/udayan-cinema-tarakeswar-in-hoogly-CD1102427', name: 'Tarakeswar', since: '2025', address: '2nd Floor, Silvision Mall, Gure, Tarakeswar, West Bengal 712410', phone: '7679088942', parking: 'Two & four-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/tarkeshwar/udayan-cinema-tarkeshwar/buytickets/UUCT/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Tarakeswar' },
 ];
 export const upcoming = [
  {title:'The Eken: Kerela-E-Kurukshetra',image:'The-Eken_Poster.jpg'},

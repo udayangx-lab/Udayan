@@ -5,3 +5,6 @@ out/
 .env*
 .DS_Store
 .sites-runtime/
+
+public/data/live-listings.json*
+.listings-sync.lock

@@ -8,6 +8,19 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(ROOT), **kwargs)
     def do_GET(self):
         path = unquote(urlsplit(self.path).path)
+        if path == '/data/live-listings.json':
+            live = ROOT.parent / 'public/data/live-listings.json'
+            if not live.is_file():
+                self.send_error(503, 'Listings are refreshing')
+                return
+            content = live.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
         candidate = (ROOT / path.lstrip('/')).resolve()
         if ROOT in candidate.parents and not candidate.suffix and candidate.with_suffix('.html').is_file():
             self.path = path.rstrip('/') + '.html'

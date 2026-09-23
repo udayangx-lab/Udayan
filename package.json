@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "dev": "node scripts/runtime.mjs dev",
     "build": "next build --webpack",
-    "start": "python3 scripts/preview.py",
+    "start": "node scripts/runtime.mjs start",
     "typecheck": "tsc --noEmit",
     "scrape": "node scripts/scrape.mjs",
-    "check:export": "node scripts/check-export.mjs"
+    "check:export": "node scripts/check-export.mjs",
+    "sync:listings": "node scripts/sync-listings.mjs",
+    "test:listings": "node --test tests/listings.test.mjs"
   },
   "dependencies": {
     "next": "latest",
