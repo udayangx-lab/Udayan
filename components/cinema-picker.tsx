@@ -1,15 +1,26 @@
 'use client';
 
 import {useEffect, useId, useRef, useState, type KeyboardEvent} from 'react';
-import {Check, ChevronDown, MapPin} from 'lucide-react';
+import {Check, ChevronDown, LocateFixed, MapPin} from 'lucide-react';
 import {cinemas} from '@/lib/data';
+import type {LocationStatus} from '@/lib/cinema-location';
 
-export function CinemaPicker({index, onChange}: {index: number; onChange: (index: number) => void}) {
+export function CinemaPicker({index, onChange, locationStatus, onLocate}: {
+  index: number; onChange: (index: number) => void; locationStatus: LocationStatus; onLocate: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const options = useRef<(HTMLButtonElement | null)[]>([]);
+  const locationMessage = {
+    idle: 'Choose a cinema or use your location.',
+    locating: 'Allow location access to find the nearest cinema.',
+    nearest: 'Your nearest cinema is selected.',
+    manual: 'You chose this cinema.',
+    denied: 'Location access is off. You can choose a cinema above.',
+    unavailable: 'Location is unavailable. You can choose a cinema above.',
+  }[locationStatus];
 
   useEffect(() => {
     if (!open) return;
@@ -52,7 +63,8 @@ export function CinemaPicker({index, onChange}: {index: number; onChange: (index
 
   return (
     <div className="cinema-picker" ref={root} data-open={open}
-      onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);}}>
+      onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);}}
+      onKeyDown={event => {if (open && event.key === 'Escape') {event.preventDefault(); close();}}}>
       <button ref={trigger} type="button" className="cinema-picker-trigger"
         aria-label={`Select cinema: ${cinemas[index].name}`} aria-haspopup="menu"
         aria-expanded={open} aria-controls={menuId} onClick={() => setOpen(!open)}
@@ -82,6 +94,15 @@ export function CinemaPicker({index, onChange}: {index: number; onChange: (index
               {index === optionIndex && <Check className="cinema-option-check" size={17} aria-hidden="true"/>}
             </button>
           ))}
+        </div>
+        <div className="cinema-picker-location">
+          <button type="button" className="cinema-locate-button"
+            onClick={() => {if (locationStatus !== 'locating') onLocate();}}
+            aria-disabled={locationStatus === 'locating'}>
+            <LocateFixed size={16} aria-hidden="true"/>
+            {locationStatus === 'locating' ? 'Finding your cinema…' : 'Use my location'}
+          </button>
+          <p role="status" aria-live="polite">{locationMessage}</p>
         </div>
       </div>
     </div>

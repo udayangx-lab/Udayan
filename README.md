@@ -62,3 +62,11 @@ Both `npm start` and `npm run dev` refresh District at startup and every 30 minu
 - Each cinema records its own successful-update time. Failed refreshes preserve its last good data and expose an update warning. Expired shows are hidden; caches older than 24 hours are not displayed as bookable shows. Missing listings offer the platform chooser rather than silently falling back to the old movie snapshot.
 - District’s page structure can change. Parser failures are logged by the worker and covered by the stale-data UI; maintain the extractor if the source changes.
 - This work remains local; no website has been deployed.
+
+## Nearby cinema selection
+
+On a first visit without a saved manual preference, the site requests browser location permission and chooses the nearest cinema using the venue coordinates published by District (Sheoraphuli: 22.774846, 88.326738; Tarakeswar: 22.874893, 88.012038). Coordinates are used only in browser memory and are not sent to our server or stored. This uses browser geolocation, not IP geolocation, and requires HTTPS in production (localhost works for development).
+
+A manual cinema choice is remembered on that browser. It takes priority over automatic detection, including a pending location request. “Use my location” in the header picker allows visitors to opt back into automatic selection. Denied permission, timeouts, and unavailable location services leave manual selection usable; the initial fallback is Sheoraphuli. Listings and booking destinations share the selected cinema. The browser tab and Apple touch icon use the original Udayan logo.
+
+Run `node --experimental-strip-types --test tests/cinema-location.test.mjs` with Node.js 22.6+ to verify nearest-venue calculations, saved preferences, permission failures, and in-flight request handling.

@@ -125,3 +125,9 @@ button.poster-link{width:100%;padding:0;border:0;text-align:left;color:inherit;f
 @media(max-width:1150px) and (min-width:951px){.cinema-picker-trigger{font-size:12px;gap:5px;padding-right:9px}.cinema-picker-pin{width:27px;height:29px}}
 @media(max-width:650px){.cinema-picker-trigger{font-size:12px;gap:7px}.cinema-picker-panel{right:-54px;top:calc(100% + 12px)}}
 @media(prefers-reduced-motion:reduce){.cinema-picker-trigger,.cinema-picker-chevron,.cinema-picker-panel,.cinema-picker-option{transition:none}}
+
+.cinema-picker-location{border-top:1px solid var(--line);margin-top:10px;padding:12px 10px 5px}
+.cinema-locate-button{display:flex;align-items:center;gap:8px;border:0;border-radius:7px;background:transparent;color:var(--red);padding:7px 0;font-size:12px;font-weight:650}
+.cinema-locate-button:hover{color:var(--ink)}
+.cinema-locate-button[aria-disabled="true"]{color:var(--muted);cursor:progress}
+.cinema-picker-location p{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
