@@ -15,3 +15,5 @@ export const upcoming = [
  {title:'Maatrubhumi',image:'Maatrubhumi.jpg'},
 ];
 export const nav = [{href:'/movies',label:'Movies'},{href:'/experience',label:'The experience'},{href:'/dpd-cafe',label:'DPD Café'},{href:'/about',label:'Our story'},{href:'/contact',label:'Visit us'}];
+
+export const moreNav = [{href:'/hooghly-river',label:'Hooghly River'},{href:'/advertisement',label:'Advertise with us'},{href:'/career',label:'Careers'},{href:'/gallery',label:'Gallery'},{href:'/patron-feedback',label:'Patron feedback'}];

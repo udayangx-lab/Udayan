@@ -15,6 +15,8 @@ const revealTargets = [
   '.inline-cta', '.story-layout > *', '.timeline > article', '.gallery-tile',
   '.contact-card', '.contact-secondary > div', '.faq > *', '.river-intro > *',
   '.feedback-panel > *', 'footer .footer-main > div',
+  '.collection-heading', '.document-book', '.advertising-intro > *', '.advertising-formats > article',
+  '.career-layout > *', '.career-steps > *',
 ].join(',');
 
 export function MotionProvider({children}: {children: ReactNode}) {

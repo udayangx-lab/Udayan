@@ -70,3 +70,9 @@ On a first visit without a saved manual preference, the site requests browser lo
 A manual cinema choice is remembered on that browser. It takes priority over automatic detection, including a pending location request. “Use my location” in the header picker allows visitors to opt back into automatic selection. Denied permission, timeouts, and unavailable location services leave manual selection usable; the initial fallback is Sheoraphuli. Listings and booking destinations share the selected cinema. The browser tab and Apple touch icon use the original Udayan logo.
 
 Run `node --experimental-strip-types --test tests/cinema-location.test.mjs` with Node.js 22.6+ to verify nearest-venue calculations, saved preferences, permission failures, and in-flight request handling.
+
+## Collections and header navigation
+
+The header’s More menu links to Hooghly River, Advertise with Us, Careers, Gallery, and Patron Feedback. All links also appear directly in the mobile menu.
+
+`components/document-book.tsx` presents the complete original collections with a page-turn effect, swipe/keyboard navigation, page selection, optional thumbnails, and an enlarged reading dialog. Reduced-motion preferences disable the turn animation. All 59 Hooghly slides and all 19 advertising brochure pages are local assets; `research/collections.json` records their original URLs, checked on 25 September 2026. Advertising rates are reproduced within the original brochure and must be confirmed with the cinema. The career page keeps the official application form as the CV submission destination.
