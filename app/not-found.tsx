@@ -1,2 +1,7 @@
-import {MotionLink as Link} from '@/components/site-motion';
-export default function NotFound(){return <section className="container section"><span className="eyebrow">404 · THAT SCENE IS MISSING</span><h1 style={{fontSize:64}}>Let’s get you back to the movies.</h1><p style={{margin:'24px 0'}}>We couldn’t find the page you were looking for.</p><Link href="/" className="button red">Back to Udayan</Link></section>}
+import {CinemaLoaderProvider} from '@/components/cinema-preloader';
+import SiteShell from '@/components/site-shell';
+import NotFoundContent from '@/components/not-found-content';
+import {getSiteContent} from '@/lib/server/content';
+import {publicContent} from '@/lib/data';
+// Unmatched URLs render outside the (site) layout, so this page brings its own header and footer.
+export default async function NotFound(){const content=await getSiteContent();return <CinemaLoaderProvider><SiteShell content={publicContent(content)}><NotFoundContent/></SiteShell></CinemaLoaderProvider>}

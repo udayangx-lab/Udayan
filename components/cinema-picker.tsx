@@ -2,12 +2,13 @@
 
 import {useEffect, useId, useRef, useState, type KeyboardEvent} from 'react';
 import {Check, ChevronDown, LocateFixed, MapPin} from 'lucide-react';
-import {cinemas} from '@/lib/data';
+import {useSiteContent} from './site-content';
 import type {LocationStatus} from '@/lib/cinema-location';
 
 export function CinemaPicker({index, onChange, locationStatus, onLocate}: {
   index: number; onChange: (index: number) => void; locationStatus: LocationStatus; onLocate: () => void;
 }) {
+  const {cinemas} = useSiteContent();
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -89,7 +90,7 @@ export function CinemaPicker({index, onChange, locationStatus, onLocate}: {
               onClick={() => {onChange(optionIndex); close();}}>
               <span className="cinema-option-pin"><MapPin size={18} aria-hidden="true"/></span>
               <span className="cinema-option-copy"><strong>{cinema.name}</strong>
-                <span>{cinema.id === 'sheoraphuli' ? 'Grand Trunk Road · Since 1946' : 'Silvision Mall · Since 2025'}</span>
+                <span>{[cinema.tagline, 'Since ' + cinema.since].filter(Boolean).join(' · ')}</span>
               </span>
               {index === optionIndex && <Check className="cinema-option-check" size={17} aria-hidden="true"/>}
             </button>

@@ -188,3 +188,45 @@ button.poster-link{width:100%;padding:0;border:0;text-align:left;color:inherit;f
 .book-zoom-frame>img{width:100%;height:auto;max-height:calc(100dvh - 190px);object-fit:contain}
 .book-zoom-frame[data-zoomed="true"]>img{width:200%;max-width:none;max-height:none}
 @media(max-width:650px){.book-zoom-frame,.book-zoom-frame>img{max-height:calc(100dvh - 230px)}.book-reading-tools .book-enlarge{font-size:12px;gap:6px;padding:6px}}
+
+/* A corner fold keeps the printed face flat and reveals the paper underneath. */
+.book-sheet[data-corner-turn="true"]{overscroll-behavior-x:contain}
+.book-corner-turn{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.book-corner-turn>canvas,.book-corner-turn>img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.book-corner-turn>img{object-fit:contain}
+
+/* Dedicated enquiry forms. Fields submit to the site's own server and are stored for the admin panel. */
+.form-section{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:60px;align-items:start;margin-top:70px;padding-top:60px;border-top:1px solid var(--line);scroll-margin-top:120px}
+.page-content>.form-section:first-child,.contact-secondary+.form-section{margin-top:0;border-top:0}.page-content>.form-section:first-child{padding-top:0}
+.form-intro{position:sticky;top:130px}.form-intro h2{font-size:clamp(36px,4vw,50px);margin-bottom:18px}.form-intro>p{color:var(--muted);font-size:15px;line-height:1.75;max-width:400px}
+.form-aside{font-size:13px;color:var(--muted);margin-top:18px}.form-aside a{color:var(--red);font-weight:600}
+.form-card{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:34px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 18px}
+.form-field{display:flex;flex-direction:column;gap:7px;min-width:0;margin:0;padding:0;border:0}.form-field.wide{grid-column:1/-1}
+.form-field>label,.form-field>legend{font-size:13px;font-weight:600;color:var(--ink);padding:0}.form-field>legend{margin-bottom:7px}.form-required{color:var(--red)}
+.form-field :is(input:not([type=checkbox],[type=radio]),select,textarea){width:100%;background:#fff;border:1px solid #d9d9d9;border-radius:4px;padding:12px 14px;font-size:15px;line-height:1.4;color:var(--ink);transition:border-color .18s,box-shadow .18s}
+.form-field textarea{resize:vertical;min-height:120px}.form-field ::placeholder{color:#a3a3a3}
+.site-form :is(input,select,textarea):focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px #bb05041f}
+.form-field [aria-invalid=true]{border-color:#b3261e;background:#fffafa}
+.form-hint{font-size:12px;color:var(--muted)}.form-error{font-size:12px;font-weight:550;color:#b3261e}
+.form-field input[type=file]{padding:9px;cursor:pointer}.form-field input[type=file]::file-selector-button{border:0;border-radius:4px;background:var(--ink);color:#fff;padding:8px 14px;margin-right:12px;font:600 13px var(--font);cursor:pointer}
+.form-checkboxes>div,.form-rating>div{display:flex;flex-wrap:wrap;gap:8px}
+.form-checkboxes label,.form-rating label{position:relative;display:inline-flex}
+.form-checkboxes input,.form-rating input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.form-checkboxes span,.form-rating span{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1px solid #d9d9d9;border-radius:999px;background:#fff;font-size:13px;transition:background .18s,border-color .18s,color .18s}
+.form-rating span b{font-weight:700;color:var(--red)}
+.form-checkboxes label:hover span,.form-rating label:hover span{border-color:#bbb}
+.form-checkboxes input:checked+span,.form-rating input:checked+span{background:var(--red);border-color:var(--red);color:#fff}.form-rating input:checked+span b{color:#fff}
+.form-checkboxes input:focus-visible+span,.form-rating input:focus-visible+span{outline:2px solid var(--red);outline-offset:2px}
+fieldset.form-field[aria-invalid=true] span{border-color:#e2a9a5}
+.form-trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.form-alert{background:#fff1f0;border-left:3px solid var(--red);padding:12px 16px;font-size:14px;color:#8a1010;margin-bottom:22px}.form-alert:focus{outline:none}
+.form-submit{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:28px}.form-submit p{flex:1;min-width:200px;font-size:12px;color:var(--muted)}
+.form-submit .button:disabled{opacity:.7;cursor:progress;transform:none}
+.form-success{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:40px 10px}.form-success:focus{outline:none}
+.form-success>svg{color:var(--red);stroke-width:1.5}.form-success h3{font:600 38px/1.05 var(--display)}.form-success>p{max-width:420px;color:var(--muted);font-size:15px}
+.form-reference{background:#fff;border:1px dashed #d9c2c2;border-radius:4px;padding:8px 14px}.form-reference strong{color:var(--ink);letter-spacing:.5px}
+.form-success .text-link{margin-top:10px;background:none;border-width:0 0 1px;color:var(--ink)}
+@media(prefers-reduced-motion:no-preference){.form-success{animation:cinema-dialog-enter 360ms cubic-bezier(.22,1,.36,1)}}
+@media(max-width:950px){.form-section{grid-template-columns:1fr;gap:30px}.form-intro{position:static}}
+@media(max-width:650px){.form-section{margin-top:45px;padding-top:40px}.form-intro h2{font-size:38px}.form-intro>p{font-size:14px}.form-card{padding:22px 16px}.form-grid{grid-template-columns:1fr;gap:18px}.form-field :is(input:not([type=checkbox],[type=radio]),select,textarea){font-size:16px}.form-submit{gap:14px}.form-submit .button{width:100%}.form-success h3{font-size:32px}}

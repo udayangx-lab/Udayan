@@ -2,12 +2,13 @@
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode, type MouseEvent} from 'react';
 import {usePathname} from 'next/navigation';
 import {ArrowUpRight, MapPin, Ticket, X} from 'lucide-react';
-import {cinemas} from '@/lib/data';
+import {useSiteContent} from './site-content';
 import {dateLabel} from '@/lib/listings';
 export type BookingSelection = {cinemaIndex?: number; movie?: string; language?: string; date?: string; time?: string; upcoming?: boolean};
 const Context = createContext<(selection?: BookingSelection) => void>(() => {});
 export const useBooking = () => useContext(Context);
 export function BookingProvider({children, cinemaIndex}: {children: ReactNode; cinemaIndex: number}) {
+  const {cinemas} = useSiteContent();
   const [selection, setSelection] = useState<BookingSelection | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const pathname = usePathname();

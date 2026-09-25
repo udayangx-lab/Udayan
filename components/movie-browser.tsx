@@ -2,13 +2,14 @@
 
 import {useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent} from 'react';
 import {ArrowUpRight, ChevronLeft, ChevronRight, MapPin} from 'lucide-react';
-import {upcoming, cinemas} from '@/lib/data';
+import {useSiteContent} from './site-content';
 import {useCinema} from './site-shell';
 import {useBooking} from './booking-chooser';
 import {useLiveListings} from './live-listings';
 import {dateLabel, type Show} from '@/lib/listings';
 
 export function MovieBrowser({compact = false}: {compact?: boolean}) {
+  const {cinemas, upcoming} = useSiteContent();
   const [tab, setTab] = useState('showing');
   const [language, setLanguage] = useState('All languages');
   const {index} = useCinema();
@@ -33,7 +34,7 @@ export function MovieBrowser({compact = false}: {compact?: boolean}) {
   }, []);
   const data: {id: string; title: string; poster: string; language?: string; format?: string; sessions: Show[]}[] = tab === 'showing'
     ? currentMovies.filter(movie => activeLanguage === 'All languages' || movie.language === activeLanguage)
-    : upcoming.map(movie => ({id: movie.image, title: movie.title, poster: '/images/' + movie.image, sessions: []}));
+    : upcoming.map(movie => ({id: movie.id, title: movie.title, poster: movie.poster, sessions: []}));
 
   useLayoutEffect(() => {
     const element = track.current;

@@ -1,12 +1,14 @@
 'use client';
 
 import {useEffect, useId, useRef, useState, type KeyboardEvent} from 'react';
+import BookCornerTurn from './book-corner-turn';
+import {createWheelSwipe, touchSwipe, type Finger} from '@/lib/book-gestures';
 import {ArrowLeft, ArrowRight, BookOpen, Download, Grid2X2, Maximize2, X, ZoomIn, ZoomOut} from 'lucide-react';
 
 type Page = {src: string; alt: string};
 type Turn = {from: number; to: number; direction: 'next' | 'previous'};
 
-export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]; title: string; aspectRatio: string}) {
+export default function DocumentBook({pages, title, aspectRatio, cornerTurn = false}: {pages: Page[]; title: string; aspectRatio: string; cornerTurn?: boolean}) {
   const [page, setPage] = useState(0);
   const [turn, setTurn] = useState<Turn | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,8 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
   const [zoomed, setZoomed] = useState(false);
   const busy = useRef(false);
   const request = useRef(0);
-  const gesture = useRef<{x: number; y: number} | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const stepRef = useRef<(amount: number) => void>(() => {});
   const dialog = useRef<HTMLDialogElement>(null);
   const enlargeButton = useRef<HTMLButtonElement>(null);
   const thumbnailStrip = useRef<HTMLDivElement>(null);
@@ -27,9 +30,9 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
     if (!turn) return;
     const timer = setTimeout(() => {
       setPage(turn.to); setTurn(null); busy.current = false;
-    }, 680);
+    }, cornerTurn ? 1800 : 680);
     return () => clearTimeout(timer);
-  }, [turn]);
+  }, [turn, cornerTurn]);
   useEffect(() => {
     for (const next of [page - 1, page + 1]) {
       if (!pages[next]) continue;
@@ -47,6 +50,46 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
     dialog.current?.showModal();
     return () => {document.body.style.overflow = previous;};
   }, [enlarged]);
+
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const wheelSwipe = createWheelSwipe();
+    let fingers: Finger[] | null = null;
+    let fired = false;
+    const points = (touches: TouchList): Finger[] => Array.from(touches, touch => ({id: touch.identifier, x: touch.clientX, y: touch.clientY}));
+    const start = (event: TouchEvent) => {
+      fingers = event.touches.length <= (cornerTurn ? 2 : 1) ? points(event.touches) : null;
+      fired = false;
+    };
+    const move = (event: TouchEvent) => {
+      if (!fingers) return;
+      if (fired) {if (event.cancelable) event.preventDefault(); return;}
+      const direction = touchSwipe(fingers, points(event.touches));
+      if (direction === 'cancel') {fingers = null; return;}
+      if (direction && event.cancelable) event.preventDefault();
+      if (direction === 'next' || direction === 'previous') {
+        fired = true; stepRef.current(direction === 'next' ? 1 : -1);
+      }
+    };
+    const end = () => {fingers = null;};
+    const wheel = (event: WheelEvent) => {
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? sheet.clientWidth : 1;
+      const result = wheelSwipe({dx: event.deltaX * unit, dy: event.deltaY * unit, time: performance.now(), pinch: event.ctrlKey || event.metaKey});
+      if (result.consume && event.cancelable) event.preventDefault();
+      if (result.direction) stepRef.current(result.direction === 'next' ? 1 : -1);
+    };
+    sheet.addEventListener('touchstart', start, {passive: true});
+    sheet.addEventListener('touchmove', move, {passive: false});
+    sheet.addEventListener('touchend', end);
+    sheet.addEventListener('touchcancel', end);
+    if (cornerTurn) sheet.addEventListener('wheel', wheel, {passive: false});
+    return () => {
+      sheet.removeEventListener('touchstart', start); sheet.removeEventListener('touchmove', move);
+      sheet.removeEventListener('touchend', end); sheet.removeEventListener('touchcancel', end);
+      sheet.removeEventListener('wheel', wheel);
+    };
+  }, [cornerTurn]);
 
   async function go(next: number) {
     if (busy.current || next === page || next < 0 || next >= pages.length) return;
@@ -71,6 +114,8 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
       setError('This page could not load. Please try again.');
     }
   }
+  stepRef.current = amount => {void go(page + amount);};
+  function finishTurn() {if (turn) {setPage(turn.to); setTurn(null); busy.current = false;}}
   function keyboard(event: KeyboardEvent<HTMLElement>) {
     if ((event.target as HTMLElement).matches('select,input,textarea')) return;
     const target = {ArrowLeft: page - 1, ArrowRight: page + 1, Home: 0, End: pages.length - 1}[event.key];
@@ -91,19 +136,11 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
       <button ref={enlargeButton} type="button" className="book-enlarge" disabled={!!turn || loading} onClick={() => setEnlarged(true)}><Maximize2 size={16}/>Enlarge page</button>
     </div>
     <div className="book-desk">
-      <div className="book-sheet" tabIndex={0} aria-label="Use left and right arrow keys to turn pages" style={{aspectRatio, maxWidth: `min(940px, calc(65dvh * (${aspectRatio})))`}}
-        onTouchStart={event => {gesture.current = {x: event.touches[0].clientX, y: event.touches[0].clientY};}}
-        onTouchEnd={event => {
-          const start = gesture.current; gesture.current = null;
-          if (!start) return;
-          const dx = event.changedTouches[0].clientX - start.x;
-          const dy = event.changedTouches[0].clientY - start.y;
-          if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) void go(page + (dx < 0 ? 1 : -1));
-        }}>
+      <div ref={sheetRef} className="book-sheet" data-corner-turn={cornerTurn} tabIndex={0} aria-label={cornerTurn ? 'Swipe horizontally with two fingers or use arrow keys to turn pages' : 'Use left and right arrow keys to turn pages'} style={{aspectRatio, maxWidth: `min(940px, calc(65dvh * (${aspectRatio})))`}}>
         <img className="book-page" src={pages[visiblePage].src} alt={pages[visiblePage].alt} draggable={false}/>
-        {turn && <div className="book-turn" data-direction={turn.direction} aria-hidden="true">
+        {turn && (cornerTurn ? <BookCornerTurn src={pages[turningPage].src} direction={turn.direction} onComplete={finishTurn}/> : <div className="book-turn" data-direction={turn.direction} aria-hidden="true">
           <img src={pages[turningPage].src} alt="" draggable={false}/><span/>
-        </div>}
+        </div>)}
       </div>
     </div>
     <div className="book-controls"><div className="book-arrows">{controls}</div>
@@ -112,9 +149,9 @@ export default function DocumentBook({pages, title, aspectRatio}: {pages: Page[]
       </select></label>
       <button type="button" className="book-thumbnails-toggle" aria-expanded={thumbnails} aria-controls={`${id}-pages`} onClick={() => setThumbnails(!thumbnails)}><Grid2X2 size={16}/>{thumbnails ? 'Hide pages' : 'All pages'}</button>
     </div>
-    <p className="book-help" role="status">{error || (loading ? 'Loading page…' : 'Swipe or use the arrows to turn the pages.')}</p>
+    <p className="book-help" role="status">{error || (loading ? 'Loading page…' : cornerTurn ? 'Swipe left or right with two fingers to turn a page. Arrow keys work too.' : 'Swipe or use the arrows to turn the pages.')}</p>
     {thumbnails && <div id={`${id}-pages`} className="book-thumbnails" ref={thumbnailStrip}>
-      {pages.map((item,index) => <button type="button" key={item.src} aria-label={`Go to page ${index + 1}`} aria-current={page === index ? 'page' : undefined}
+      {pages.map((item,index) => <button type="button" key={index} aria-label={`Go to page ${index + 1}`} aria-current={page === index ? 'page' : undefined}
         disabled={!!turn || loading} onClick={() => void go(index)}><img src={item.src} alt="" loading="lazy"/><span>{String(index + 1).padStart(2,'0')}</span></button>)}
     </div>}
     <dialog ref={dialog} className="book-dialog" aria-label={`${title} — enlarged page`} onCancel={event => {event.preventDefault(); close();}}

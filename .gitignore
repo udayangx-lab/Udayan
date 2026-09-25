@@ -3,8 +3,9 @@ node_modules/
 out/
 *.tsbuildinfo
 .env*
+!.env.example
 .DS_Store
 .sites-runtime/
 
-public/data/live-listings.json*
+storage/
 .listings-sync.lock

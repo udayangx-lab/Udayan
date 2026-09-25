@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
 import {syncListings, refreshInterval} from './sync-listings.mjs';
 const dev = process.argv[2] === 'dev';
-const server = dev ? spawn(process.execPath, ['node_modules/next/dist/bin/next','dev','--webpack','--hostname','0.0.0.0'], {stdio: 'inherit'}) : spawn('python3', ['scripts/preview.py'], {stdio: 'inherit'});
+const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', ...(dev ? ['dev', '--webpack', '--hostname', '0.0.0.0'] : ['start'])], {stdio: 'inherit', env: {...process.env, NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' ')}});
 const refresh = () => syncListings().catch(error => console.error('[listings]', error.message));
 void refresh();
 const timer = setInterval(refresh, refreshInterval);
