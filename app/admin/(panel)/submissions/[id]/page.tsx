@@ -19,10 +19,10 @@ const emailText = {pending: 'The notification email is being sent.', sent: 'The 
 
 export default async function SubmissionPage({params, searchParams}: Props) {
   const admin = await requireAdmin('submissions');
-  const submission = getSubmission(Number((await params).id));
+  const submission = await getSubmission(Number((await params).id));
   if (!submission) notFound();
   const definition = formDefinitions[submission.type];
-  const cinemaNames = Object.fromEntries(readContent().cinemas.map(cinema => [cinema.id, cinema.name]));
+  const cinemaNames = Object.fromEntries((await readContent()).cinemas.map(cinema => [cinema.id, cinema.name]));
   const rows = definition.fields.filter(field => field.type !== 'file').map(field => ({field, value: displayValue(field, submission.values[field.name], cinemaNames)}));
   const id = <input type="hidden" name="id" value={submission.id}/>;
   return <>

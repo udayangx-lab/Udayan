@@ -21,9 +21,9 @@ export async function sendEmail(email: Email) {
 
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]!));
 
-function render(submission: Submission) {
+async function render(submission: Submission) {
   const definition = formDefinitions[submission.type];
-  const cinemaNames = Object.fromEntries(readContent().cinemas.map(cinema => [cinema.id, cinema.name]));
+  const cinemaNames = Object.fromEntries((await readContent()).cinemas.map(cinema => [cinema.id, cinema.name]));
   const rows = definition.fields.filter(field => field.type !== 'file').map(field => [field.label, displayValue(field, submission.values[field.name], cinemaNames)] as const).filter(([, value]) => value);
   if (submission.attachment) rows.push(['CV', `${submission.attachment.name} (attached)`]);
   const site = process.env.SITE_URL?.replace(/\/$/, '');
@@ -44,22 +44,22 @@ function render(submission: Submission) {
 
 /** Emails the admins about a stored submission and records the delivery outcome on it. */
 export async function notifyAdmins(submission: Submission) {
-  const to = recipientsFor(submission.type);
+  const to = await recipientsFor(submission.type);
   if (!emailConfigured() || !to.length) {
-    updateSubmission(submission.id, {emailStatus: 'skipped', emailError: !emailConfigured() ? 'Resend is not configured (RESEND_API_KEY / RESEND_FROM).' : 'No notification recipients are set.'});
+    await updateSubmission(submission.id, {emailStatus: 'skipped', emailError: !emailConfigured() ? 'Resend is not configured (RESEND_API_KEY / RESEND_FROM).' : 'No notification recipients are set.'});
     return;
   }
   try {
     const attachments = [];
     if (submission.attachment) {
-      const bytes = await readStored('uploads', submission.attachment.file);
-      if (bytes) attachments.push({filename: submission.attachment.name, content: bytes.toString('base64')});
+      const stored = await readStored('document', submission.attachment.file);
+      if (stored) attachments.push({filename: submission.attachment.name, content: stored.bytes.toString('base64')});
     }
-    await sendEmail({to, ...render(submission), replyTo: submission.email || undefined, attachments});
-    updateSubmission(submission.id, {emailStatus: 'sent'});
+    await sendEmail({to, ...await render(submission), replyTo: submission.email || undefined, attachments});
+    await updateSubmission(submission.id, {emailStatus: 'sent'});
   } catch (error) {
     console.error(`[forms] Notification for ${submission.reference} failed:`, error);
-    updateSubmission(submission.id, {emailStatus: 'failed', emailError: error instanceof Error ? error.message : String(error)});
+    await updateSubmission(submission.id, {emailStatus: 'failed', emailError: error instanceof Error ? error.message : String(error)});
   }
 }
 
@@ -81,15 +81,15 @@ export function renderReply(settings: AutoReply, submission: Pick<Submission, 'n
 
 /** Confirms receipt to the visitor, when they gave an email and replies are on for this form. */
 export async function sendAutoReply(submission: Submission) {
-  const settings = readNotifications().autoReply;
+  const settings = (await readNotifications()).autoReply;
   if (!submission.email || !settings.enabled || !settings.forms.includes(submission.type)) return;
-  if (!emailConfigured()) {updateSubmission(submission.id, {replyStatus: 'skipped'}); return;}
-  const replyTo = readContent().contactEmail;
+  if (!emailConfigured()) {await updateSubmission(submission.id, {replyStatus: 'skipped'}); return;}
+  const replyTo = (await readContent()).contactEmail;
   try {
     await sendEmail({to: [submission.email], ...renderReply(settings, submission), replyTo});
-    updateSubmission(submission.id, {replyStatus: 'sent'});
+    await updateSubmission(submission.id, {replyStatus: 'sent'});
   } catch (error) {
     console.error(`[forms] Auto-reply for ${submission.reference} failed:`, error);
-    updateSubmission(submission.id, {replyStatus: 'failed'});
+    await updateSubmission(submission.id, {replyStatus: 'failed'});
   }
 }

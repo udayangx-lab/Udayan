@@ -21,8 +21,8 @@ export async function saveSection(sectionId: string, _previous: SectionState, fo
     if ('error' in saved) return {error: `${upload.file.name}: ${saved.error}`};
     upload.assign(saved.path);
   }
-  saveContentAt(section.path, values);
-  logActivity(admin, `Edited ${section.group} · ${section.title}`);
+  await saveContentAt(section.path, values);
+  await logActivity(admin, `Edited ${section.group} · ${section.title}`);
   refreshSite();
   return {saved: Date.now()};
 }

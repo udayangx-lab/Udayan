@@ -7,7 +7,7 @@ import {logout} from '../actions';
 
 export default async function PanelLayout({children}: {children: React.ReactNode}) {
   const admin = await requireAdmin();
-  const unread = Object.values(submissionCounts()).reduce((sum, count) => sum + count.new, 0);
+  const unread = Object.values(await submissionCounts()).reduce((sum, count) => sum + count.new, 0);
   return <div className="admin-shell">
     <aside className="admin-sidebar">
       <a className="admin-brand" href="/admin"><img src="/images/udayancinema-logo.png" alt="" width="46" height="42"/><span>Udayan<small>Admin panel</small></span></a>

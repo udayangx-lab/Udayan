@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
   if (!admin || !can(admin, 'submissions')) return new Response('Unauthorized', {status: 401});
   const search = request.nextUrl.searchParams;
   const type = search.get('type') || '';
-  const submissions = allSubmissions({type, status: search.get('status') || '', query: search.get('q') || ''});
-  const cinemaNames = Object.fromEntries(readContent().cinemas.map(cinema => [cinema.id, cinema.name]));
+  const submissions = await allSubmissions({type, status: search.get('status') || '', query: search.get('q') || ''});
+  const cinemaNames = Object.fromEntries((await readContent()).cinemas.map(cinema => [cinema.id, cinema.name]));
   const fields = [...new Map((isFormType(type) ? [type] : formTypes).flatMap(item => formDefinitions[item].fields).filter(field => field.type !== 'file').map(field => [field.name, field])).values()];
   const header = ['Reference', 'Form', 'Status', 'Received (IST)', ...fields.map(field => field.label), 'CV', 'Internal note'];
   const rows = submissions.map(submission => [

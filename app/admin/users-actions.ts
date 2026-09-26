@@ -18,69 +18,69 @@ export async function addUser(formData: FormData) {
   if (!isRole(role)) back('/admin/users', {error: 'Choose a role.'});
   const problem = passwordProblem(password);
   if (problem) back('/admin/users', {error: `Password: ${problem}`});
-  if (findUserByEmail(email)) back('/admin/users', {error: 'An account with that email already exists.'});
-  createUser({name, email, role, password});
-  logActivity(admin, `Added ${name} (${email}) as ${roleLabels[role]}`);
+  if (await findUserByEmail(email)) back('/admin/users', {error: 'An account with that email already exists.'});
+  await createUser({name, email, role, password});
+  await logActivity(admin, `Added ${name} (${email}) as ${roleLabels[role]}`);
   back('/admin/users', {notice: 'user-added'});
 }
 
-function userFrom(formData: FormData) {
-  const user = getUser(Number(formData.get('id')));
+async function userFrom(formData: FormData) {
+  const user = await getUser(Number(formData.get('id')));
   if (!user) back('/admin/users', {error: 'That account no longer exists.'});
   return user;
 }
 // There must always be an active owner account besides the server password.
-function keepsOwner(user: {role: string; active: boolean}, next: {role?: string; active?: boolean}) {
+async function keepsOwner(user: {role: string; active: boolean}, next: {role?: string; active?: boolean}) {
   const losesOwner = user.role === 'owner' && user.active && ((next.role && next.role !== 'owner') || next.active === false);
-  return !losesOwner || activeOwnerCount() > 1 || Boolean(process.env.ADMIN_PASSWORD);
+  return !losesOwner || await activeOwnerCount() > 1 || Boolean(process.env.ADMIN_PASSWORD);
 }
 
 export async function updateUserAccess(formData: FormData) {
   const admin = await requireAdmin('settings');
-  const user = userFrom(formData);
+  const user = await userFrom(formData);
   const role = formData.get('role');
   const active = formData.get('active') === 'on';
   if (!isRole(role)) back('/admin/users', {error: 'Choose a role.'});
   if (user.id === admin.id && (role !== user.role || !active)) back('/admin/users', {error: 'You cannot change your own role or deactivate yourself.'});
-  if (!keepsOwner(user, {role, active})) back('/admin/users', {error: 'Keep at least one active owner.'});
+  if (!await keepsOwner(user, {role, active})) back('/admin/users', {error: 'Keep at least one active owner.'});
   const name = field(formData, 'name', 80) || user.name;
-  updateUser(user.id, {name, ...(role !== user.role ? {role} : {}), ...(active !== user.active ? {active} : {})});
-  logActivity(admin, `Updated ${name}: ${roleLabels[role]}, ${active ? 'active' : 'deactivated'}`);
+  await updateUser(user.id, {name, ...(role !== user.role ? {role} : {}), ...(active !== user.active ? {active} : {})});
+  await logActivity(admin, `Updated ${name}: ${roleLabels[role]}, ${active ? 'active' : 'deactivated'}`);
   back('/admin/users');
 }
 
 export async function resetUserPassword(formData: FormData) {
   const admin = await requireAdmin('settings');
-  const user = userFrom(formData);
+  const user = await userFrom(formData);
   const password = String(formData.get('password') ?? '');
   const problem = passwordProblem(password);
   if (problem) back('/admin/users', {error: `${user.name}: ${problem}`});
-  updateUser(user.id, {password});
-  logActivity(admin, `Reset the password for ${user.name}`);
+  await updateUser(user.id, {password});
+  await logActivity(admin, `Reset the password for ${user.name}`);
   back('/admin/users', {notice: 'password'});
 }
 
 export async function removeUser(formData: FormData) {
   const admin = await requireAdmin('settings');
-  const user = userFrom(formData);
+  const user = await userFrom(formData);
   if (user.id === admin.id) back('/admin/users', {error: 'You cannot delete your own account.'});
-  if (!keepsOwner(user, {active: false})) back('/admin/users', {error: 'Keep at least one active owner.'});
-  deleteUser(user.id);
-  logActivity(admin, `Deleted the account for ${user.name} (${user.email})`);
+  if (!await keepsOwner(user, {active: false})) back('/admin/users', {error: 'Keep at least one active owner.'});
+  await deleteUser(user.id);
+  await logActivity(admin, `Deleted the account for ${user.name} (${user.email})`);
   back('/admin/users', {notice: 'user-deleted'});
 }
 
 export async function changeOwnPassword(formData: FormData) {
   const admin = await requireAdmin();
-  const user = getUser(admin.id);
+  const user = await getUser(admin.id);
   if (!user) back('/admin/account', {error: 'The server owner password is set in the server environment (ADMIN_PASSWORD).'});
   if (!verifyPassword(String(formData.get('current') ?? ''), user.passwordHash)) back('/admin/account', {error: 'Your current password is not correct.'});
   const password = String(formData.get('password') ?? '');
   const problem = passwordProblem(password);
   if (problem) back('/admin/account', {error: problem});
   if (password !== formData.get('confirm')) back('/admin/account', {error: 'The new passwords do not match.'});
-  updateUser(user.id, {password});
-  logActivity(admin, 'Changed their password');
+  await updateUser(user.id, {password});
+  await logActivity(admin, 'Changed their password');
   // The version bump signed this browser out too; sign in again with the new password.
   await endSession();
   redirect('/admin/login?notice=password');

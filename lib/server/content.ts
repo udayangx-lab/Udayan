@@ -1,5 +1,5 @@
 import {connection} from 'next/server';
-import {database} from './db';
+import {query} from './db';
 import {defaultContent, type Cinema, type SiteContent} from '@/lib/data';
 import {formTypes, type FormType} from '@/lib/forms';
 
@@ -11,14 +11,13 @@ export const defaultAutoReply: AutoReply = {
   message: 'Dear {name},\n\nThank you for contacting Udayan Cinema. We have received your {form} (reference {reference}), and our team will get back to you soon.\n\nWarm regards,\nUdayan Cinema\nEntertaining since 1946',
 };
 
-export function readSetting<T>(key: string): T | null {
-  const row = database().prepare('SELECT value FROM settings WHERE key = ?').get(key) as {value: string} | undefined;
-  if (!row) return null;
-  try {return JSON.parse(row.value) as T;} catch {return null;}
+export async function readSetting<T>(key: string): Promise<T | null> {
+  const [row] = await query<{value: T}>('SELECT value FROM settings WHERE key = $1', [key]);
+  return row ? row.value : null;
 }
-export function writeSetting(key: string, value: unknown) {
-  database().prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
-    .run(key, JSON.stringify(value), new Date().toISOString());
+export async function writeSetting(key: string, value: unknown) {
+  await query('INSERT INTO settings (key, value, updated_at) VALUES ($1, $2::jsonb, now()) ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at',
+    [key, JSON.stringify(value)]);
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -32,8 +31,8 @@ function merge<T>(defaults: T, saved: unknown): T {
   return (typeof saved === typeof defaults ? saved : defaults) as T;
 }
 
-export function readContent(): SiteContent {
-  const saved = readSetting<Partial<SiteContent>>('content') || {};
+export async function readContent(): Promise<SiteContent> {
+  const saved = await readSetting<Partial<SiteContent>>('content') || {};
   const content = merge(defaultContent, saved);
   // Cinema IDs are fixed: live listings and saved visitor preferences depend on them.
   const savedCinemas = Array.isArray(saved.cinemas) ? saved.cinemas : [];
@@ -47,33 +46,33 @@ export async function getSiteContent() {
   return readContent();
 }
 
-export function saveContent(update: Partial<SiteContent>) {
-  writeSetting('content', {...readContent(), ...update});
+export async function saveContent(update: Partial<SiteContent>) {
+  await writeSetting('content', {...await readContent(), ...update});
 }
 
 /** Merges values into the object at `path`, e.g. ['pages', 'about']. */
-export function saveContentAt(path: string[], values: Record<string, unknown>) {
-  const content = readContent() as unknown as Record<string, unknown>;
+export async function saveContentAt(path: string[], values: Record<string, unknown>) {
+  const content = await readContent() as unknown as Record<string, unknown>;
   let node = content;
   for (const key of path) node = (node[key] ??= {}) as Record<string, unknown>;
   Object.assign(node, values);
-  writeSetting('content', content);
+  await writeSetting('content', content);
 }
 
 export const envRecipients = () => (process.env.ADMIN_EMAIL || '').split(',').map(value => value.trim()).filter(Boolean);
 
-export function readNotifications(): Notifications {
-  const saved = readSetting<Partial<Notifications>>('notifications') || {};
+export async function readNotifications(): Promise<Notifications> {
+  const saved = await readSetting<Partial<Notifications>>('notifications') || {};
   const overrides: Notifications['overrides'] = {};
   for (const type of formTypes) if (saved.overrides?.[type]?.length) overrides[type] = saved.overrides[type];
   const autoReply = merge(defaultAutoReply, saved.autoReply);
   autoReply.forms = autoReply.forms.filter(type => formTypes.includes(type));
   return {recipients: Array.isArray(saved.recipients) ? saved.recipients : [], overrides, autoReply};
 }
-export function saveNotifications(value: Partial<Notifications>) {writeSetting('notifications', {...readNotifications(), ...value});}
+export async function saveNotifications(value: Partial<Notifications>) {await writeSetting('notifications', {...await readNotifications(), ...value});}
 
 /** Who receives a form's notification: its own list, else the default list, else ADMIN_EMAIL. */
-export function recipientsFor(type: FormType) {
-  const settings = readNotifications();
+export async function recipientsFor(type: FormType) {
+  const settings = await readNotifications();
   return settings.overrides[type]?.length ? settings.overrides[type]! : settings.recipients.length ? settings.recipients : envRecipients();
 }

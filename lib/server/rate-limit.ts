@@ -1,15 +1,22 @@
 import {headers} from 'next/headers';
+import {query} from './db';
 
-const hits = new Map<string, number[]>();
+async function recent(key: string, windowMs: number) {
+  const [{count}] = await query<{count: number}>('SELECT COUNT(*)::int AS count FROM attempts WHERE key = $1 AND at > $2', [key, new Date(Date.now() - windowMs).toISOString()]);
+  return count;
+}
+/** For sign-in: only failures count, so staff who sign in often are never locked out. */
+export const tooManyFailures = async (key: string, limit: number, windowMs: number) => await recent(key, windowMs) >= limit;
+export async function recordFailure(key: string) {await query('INSERT INTO attempts (key) VALUES ($1)', [key]);}
 
-/** A small in-memory limiter. It resets on restart, which is acceptable for a single server. */
-export function allow(key: string, limit: number, windowMs: number) {
-  const now = Date.now();
-  const recent = (hits.get(key) || []).filter(time => now - time < windowMs);
-  if (recent.length >= limit) {hits.set(key, recent); return false;}
-  recent.push(now);
-  hits.set(key, recent);
-  if (hits.size > 5000) for (const [entry, times] of hits) if (!times.some(time => now - time < windowMs)) hits.delete(entry);
+/** Counts recent attempts in the database, so the limit holds across serverless instances. */
+export async function allow(key: string, limit: number, windowMs: number) {
+  const since = new Date(Date.now() - windowMs).toISOString();
+  const [{count}] = await query<{count: number}>('SELECT COUNT(*)::int AS count FROM attempts WHERE key = $1 AND at > $2', [key, since]);
+  if (count >= limit) return false;
+  await query('INSERT INTO attempts (key) VALUES ($1)', [key]);
+  // Occasionally clear anything older than a day.
+  if (Math.random() < 0.02) await query("DELETE FROM attempts WHERE at < now() - interval '1 day'");
   return true;
 }
 

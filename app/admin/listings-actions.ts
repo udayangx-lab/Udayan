@@ -9,8 +9,10 @@ import {back, isUpload} from '@/lib/server/admin-helpers';
 export async function refreshNowShowing() {
   const admin = await requireAdmin('content');
   const result = await refreshListings();
-  logActivity(admin, `Refreshed now-showing listings (${result.ok ? 'succeeded' : 'failed'})`);
-  if (!result.ok) back('/admin/now-showing', {error: 'District could not be refreshed. Details: ' + (result.output.trim().split('\n').pop() || 'no output')});
+  if (!result) back('/admin/now-showing', {error: 'A refresh is already running. Try again in a minute.'});
+  const failed = Object.entries(result.venues).filter(([, venue]) => venue.error);
+  await logActivity(admin, `Refreshed now-showing listings (${failed.length ? 'with errors' : 'succeeded'})`);
+  if (failed.length) back('/admin/now-showing', {error: 'District could not be refreshed for ' + failed.map(([id, venue]) => `${id} (${venue.error})`).join(', ') + '. The last saved listings are still shown.'});
   back('/admin/now-showing', {notice: 'refreshed'});
 }
 
@@ -18,7 +20,7 @@ export async function saveMovieOverride(formData: FormData) {
   const admin = await requireAdmin('content');
   const id = String(formData.get('movie') ?? '');
   if (!/^[\w.\- ]{1,120}$/.test(id)) back('/admin/now-showing', {error: 'Unknown movie.'});
-  const overrides = readOverrides();
+  const overrides = await readOverrides();
   const original = String(formData.get('original') ?? '');
   const title = String(formData.get('title') ?? '').trim().slice(0, 120);
   const hidden = formData.get('hidden') === 'on';
@@ -32,7 +34,7 @@ export async function saveMovieOverride(formData: FormData) {
     if ('error' in saved) back(`/admin/now-showing#${encodeURIComponent(id)}`, {error: saved.error});
     overrides.posters[id] = saved.path;
   }
-  saveOverrides(overrides);
-  logActivity(admin, `Updated now-showing listing “${title || original}”${hidden ? ' (hidden)' : ''}`);
+  await saveOverrides(overrides);
+  await logActivity(admin, `Updated now-showing listing “${title || original}”${hidden ? ' (hidden)' : ''}`);
   back(`/admin/now-showing#${encodeURIComponent(id)}`);
 }

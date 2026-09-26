@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
-// CV uploads are limited to 5 MB and admin poster uploads to 3 MB each; this leaves room for the other fields.
-const config: NextConfig = { images: { unoptimized: true }, devIndicators: false, experimental: { serverActions: { bodySizeLimit: '12mb' } } };
+// Vercel caps request bodies at 4.5 MB. CVs are limited to 4 MB; photos upload one at a time (3 MB each).
+// PGlite (local development only) ships WebAssembly and must not be bundled.
+const config: NextConfig = { images: { unoptimized: true }, devIndicators: false, serverExternalPackages: ['@electric-sql/pglite'], experimental: { serverActions: { bodySizeLimit: '4.5mb' } } };
 export default config;

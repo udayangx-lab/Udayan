@@ -19,7 +19,7 @@ export default async function EditSection({params, searchParams}: Props) {
   await requireAdmin('content');
   const section = findSection((await params).section);
   if (!section) notFound();
-  const values = sectionValues(section, readContent());
+  const values = sectionValues(section, await readContent());
   return <>
     <Link href="/admin/content" className="admin-link back"><ArrowLeft size={15}/>Pages & photos</Link>
     <header className="admin-header"><div><span className="admin-eyebrow">{section.group.toUpperCase()}</span><h1>{section.title}</h1>

@@ -13,8 +13,8 @@ export const metadata: Metadata = {title: 'Now showing'};
 export default async function NowShowing({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('content');
   const feed = await readListings();
-  const overrides = readOverrides();
-  const cinemas = readContent().cinemas;
+  const overrides = await readOverrides();
+  const cinemas = (await readContent()).cinemas;
   const now = Date.now();
   // One row per movie variant (title + language + format), across both cinemas.
   const movies = new Map<string, {id: string; title: string; language: string; format: string; poster: string; venues: string[]; shows: number}>();

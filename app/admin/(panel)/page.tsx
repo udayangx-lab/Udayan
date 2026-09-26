@@ -10,10 +10,11 @@ import SubmissionTable from '@/components/admin/submission-table';
 
 export default async function Dashboard({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   const admin = await requireAdmin();
-  const counts = submissionCounts();
-  const content = readContent();
-  const recent = listSubmissions({status: 'all'}, 1, 8).submissions;
-  const missingRecipients = formTypes.filter(type => !recipientsFor(type).length);
+  const counts = await submissionCounts();
+  const content = await readContent();
+  const recent = (await listSubmissions({status: 'all'}, 1, 8)).submissions;
+  const recipientLists = await Promise.all(formTypes.map(type => recipientsFor(type)));
+  const missingRecipients = formTypes.filter((_type, index) => !recipientLists[index].length);
   const cinemaNames = Object.fromEntries(content.cinemas.map(cinema => [cinema.id, cinema.name]));
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">OVERVIEW</span><h1>Welcome, {admin.name.split(' ')[0]}</h1></div></header>

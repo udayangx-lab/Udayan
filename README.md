@@ -2,30 +2,39 @@
 
 A complete responsive Next.js App Router redesign using the original cinema’s logo, brand colors, posters, and venue photography.
 
-## Run
+## Run locally
 
-Node.js 22.13+ is required (the site uses Node's built-in SQLite). Dependencies are installed and locked in `package-lock.json`.
+Node.js 20.9+ is required. Dependencies are installed and locked in `package-lock.json`.
 
 ```sh
 npm install
-cp .env.example .env.local   # then set ADMIN_PASSWORD and the Resend values
+cp .env.example .env.local   # set ADMIN_PASSWORD; leave DATABASE_URL empty to use the embedded database
 npm run dev
 ```
 
-Open http://localhost:3000. Stop any existing preview on port 3000 before starting development.
+Open http://localhost:3000 and sign in to http://localhost:3000/admin as **admin** with `ADMIN_PASSWORD`. Without `DATABASE_URL`, development uses PGlite, a real Postgres engine embedded in Node, stored in `storage/pglite` (ignored by Git). To work against Neon instead, put a Neon connection string (ideally a separate Neon branch) in `DATABASE_URL`.
 
-## Production
+## Deploy to Vercel with Neon
+
+1. Import the GitHub repository in Vercel. The framework preset is Next.js; no build settings need to change.
+2. In **Vercel → Project → Storage**, add **Neon** (Postgres) and connect it to the project. This sets `DATABASE_URL`. The tables are created automatically on the first request.
+3. In **Settings → Environment Variables**, add `ADMIN_PASSWORD`, `RESEND_API_KEY`, `RESEND_FROM`, `ADMIN_EMAIL`, `SITE_URL`, and `CRON_SECRET` (see `.env.example`).
+4. Deploy, then sign in at `/admin` as **admin**, create personal staff accounts, set email recipients, and send a test email.
+
+Where things live:
+
+- **Neon Postgres**: submissions, website content, settings, staff accounts, activity, rate limits, the showtimes feed, and uploaded files (CVs are private; photos are public under `/media/…` with permanent cache headers, so Vercel's CDN serves repeat requests).
+- **Showtimes**: `vercel.json` schedules `/api/cron/listings` every 30 minutes, protected by `CRON_SECRET`. Vercel's Hobby plan runs cron jobs only once a day, so the site also refreshes itself whenever a visitor loads showtimes older than 30 minutes. A lease row prevents overlapping refreshes.
+- **Limits**: Vercel accepts request bodies up to 4.5 MB, so CVs are limited to 4 MB and photos (3 MB each) upload one at a time.
+- **Backups**: Neon keeps point-in-time history (restore from the Neon console). The admin panel's **Download backup** exports all records as JSON.
+
+Checks before a release:
 
 ```sh
 npm run typecheck
 npm test
 npm run build
-npm start
 ```
-
-The site is a Node.js server (`next start`), not a static export: forms, the admin panel, and editable content all need it. `npm start` runs the server and the listings worker together. Host it anywhere that runs a long-lived Node.js process with a persistent disk (a VPS, Railway, Render, Fly.io, or similar). Serverless hosts without a persistent filesystem are not suitable unless `lib/server/db.ts` and `lib/server/uploads.ts` are moved to hosted storage.
-
-Everything the site writes lives in `DATA_DIR` (default `storage/`, ignored by Git): `udayan.db` (submissions and edited content), `uploads/` (CVs), `media/` (posters uploaded in the admin panel), and `live-listings.json`. Back this directory up.
 
 ## Pages
 
@@ -57,15 +66,13 @@ Exact source values retained in CSS: main red `#BB0504`, accent `#E7000B`, burgu
 
 ## Automatic listings updates
 
-Both `npm start` and `npm run dev` refresh District at startup and every 30 minutes. The browser rechecks the local JSON once a minute and when the tab becomes visible. Run `npm run sync:listings` for a manual refresh and `npm run test:listings` for parser/cache regression checks.
+Showtimes come from the two public District cinema pages. The feed is refreshed by Vercel Cron every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can also press **Refresh now** under Now showing. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
 
-- Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. Configuration lives in `scripts/lib/listings.mjs`.
-- The worker reads `__NEXT_DATA__` from public HTML without credentials, validates the cinema identity, and gathers up to seven available dates. Unzoned District timestamps are interpreted as UTC and displayed in Asia/Kolkata.
-- The generated cache is `storage/live-listings.json` (inside `DATA_DIR`, ignored by Git). Writes are atomic and overlapping runs are locked. The route `/data/live-listings.json` serves the latest file with `Cache-Control: no-store`, so rebuilds are unnecessary.
-- Each cinema records its own successful-update time. Failed refreshes preserve its last good data and expose an update warning. Expired shows are hidden; caches older than 24 hours are not displayed as bookable shows. Missing listings offer the platform chooser rather than silently falling back to the old movie snapshot.
-- District’s page structure can change. Parser failures are logged by the worker and covered by the stale-data UI; maintain the extractor if the source changes.
-- As of 25 September 2026, District's dated pages (`?fromdate=`) are rendered in the browser and carry no show data. The worker keeps the main page's shows (usually today's) and records the skipped dates, which the admin Now showing page reports, instead of failing the whole cinema.
-- This work remains local; no website has been deployed.
+- Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. Configuration and the extractor live in `scripts/lib/listings.mjs`.
+- The extractor reads `__NEXT_DATA__` from public HTML without credentials, validates the cinema identity, and gathers up to seven available dates. Unzoned District timestamps are interpreted as UTC and displayed in Asia/Kolkata.
+- Each cinema records its own successful-update time. A failed refresh keeps that cinema's last good data and shows an update warning. Expired shows are hidden; data older than 24 hours is not shown as bookable. Admin corrections (hidden titles, renamed titles, replaced posters) are applied when the feed is served.
+- District’s page structure can change. Parser failures are logged and covered by the stale-data UI; maintain the extractor if the source changes. `npm run sync:listings` runs the extractor from the command line without touching the database, and `npm run test:listings` runs the parser regression tests.
+- As of 25 September 2026, District's dated pages (`?fromdate=`) are rendered in the browser and carry no show data. The extractor keeps the main page's shows (usually today's) and records the skipped dates, which the admin Now showing page reports, instead of failing the whole cinema.
 
 ## Nearby cinema selection
 
@@ -86,11 +93,11 @@ The header’s More menu links to Hooghly River, Advertise with Us, Careers, Gal
 Every form is defined once in `lib/forms.ts` (fields, validation, labels) and rendered by `components/site-form.tsx`. Submissions go to the server action in `lib/actions/submit-form.ts`, which:
 
 1. Validates every field on the server: Indian mobile numbers, email, allowed options, ratings 1–5, dates, and lengths.
-2. Checks the CV's actual file contents (PDF, DOC, or DOCX, up to 5 MB). CVs are stored privately in `storage/uploads/` and are only downloadable by a signed-in admin.
+2. Checks the CV's actual file contents (PDF, DOC, or DOCX, up to 4 MB). CVs are stored privately in the database and are only downloadable by a signed-in admin.
 3. Saves the submission to the database, then shows the visitor a reference number such as `UC-00012`.
 4. After responding, emails the admins through Resend's API, with the CV attached and reply-to set to the visitor's email. Delivery success or failure is recorded on the submission, and it can be resent from the admin panel.
 
-Spam protection: a hidden honeypot field, a minimum fill time, and 5 submissions per 10 minutes per IP address. Forms still submit without JavaScript.
+Spam protection: a hidden honeypot field, a minimum fill time, and 5 submissions per 10 minutes per IP address (tracked in the database, so the limit holds across serverless instances). Forms still submit without JavaScript.
 
 | Page | Form | Required |
 | --- | --- | --- |
@@ -106,7 +113,7 @@ Resend setup: verify your sending domain in Resend, then set `RESEND_API_KEY` an
 
 ## Admin panel
 
-Visit `/admin`. The server owner signs in with the login **admin** and `ADMIN_PASSWORD`. That account always exists, so access can't be lost. Staff sign in with their own email and password. Sessions last 12 hours in a signed, httpOnly cookie. Deactivating an account, changing its role, or resetting its password signs that person out immediately. `proxy.ts` redirects signed-out visitors, and every admin page, action, and file route checks the session and role itself. Sign-in attempts are rate-limited.
+Visit `/admin`. The server owner signs in with the login **admin** and `ADMIN_PASSWORD`. That account always exists, so access can't be lost. Staff sign in with their own email and password. Sessions last 12 hours in a signed, httpOnly cookie. Deactivating an account, changing its role, or resetting its password signs that person out immediately. `proxy.ts` redirects signed-out visitors, and every admin page, action, and file route checks the session and role itself. Six failed sign-ins from one address lock sign-in for 15 minutes; successful sign-ins never count.
 
 | Role | Access |
 | --- | --- |
@@ -121,6 +128,6 @@ Visit `/admin`. The server owner signs in with the login **admin** and `ADMIN_PA
 - **Coming soon**, **Cinemas** (including each cinema's home-page photo), and **Site details** as before.
 - **Email**: notification recipients (default and per form), test emails, and an **automatic reply** to visitors who leave an email address. The reply has `{name}`, `{reference}`, and `{form}` placeholders, can be turned on per form, and is sent with reply-to set to the public contact email.
 - **Staff accounts**: add people with a role and temporary password, rename them, change their role, deactivate, reset passwords, or delete. There must always be an active owner. Each person can change their own password under **My account**.
-- **Activity & backup**: a log of every sign-in and change (who, what, when), and a **Download backup** button that streams a `.tar` of the database, CVs, and uploaded photos.
+- **Activity & backup**: a log of every sign-in and change (who, what, when), and a **Download backup** button that exports every record as JSON (Neon's point-in-time restore covers files too).
 
 Edits appear on the public site on the next page load. Anything not yet edited uses the defaults in `lib/data.ts`. Book pages must be uploaded as JPG, PNG, or WebP images (up to 3 MB each); convert a PDF to page images before uploading. Edited form choices apply immediately to new submissions, and past submissions keep the wording they were sent with.

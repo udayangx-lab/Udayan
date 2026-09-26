@@ -2,7 +2,7 @@
 
 import {redirect} from 'next/navigation';
 import {authenticate, endSession, requireAdmin, startSession} from '@/lib/server/auth';
-import {allow, clientAddress} from '@/lib/server/rate-limit';
+import {clientAddress, recordFailure, tooManyFailures} from '@/lib/server/rate-limit';
 import {readContent, readNotifications, saveContent, saveNotifications, envRecipients} from '@/lib/server/content';
 import {deleteSubmission, getSubmission, isStatus, statusLabels, updateSubmission} from '@/lib/server/submissions';
 import {emailConfigured, notifyAdmins, renderReply, sendEmail} from '@/lib/server/email';
@@ -13,11 +13,12 @@ import {formTypes, isFormType, normalizePhone} from '@/lib/forms';
 import type {UpcomingMovie} from '@/lib/data';
 
 export async function login(_previous: {error?: string}, formData: FormData): Promise<{error?: string}> {
-  if (!allow(`login:${await clientAddress()}`, 6, 15 * 60 * 1000)) return {error: 'Too many attempts. Please wait 15 minutes and try again.'};
-  const admin = authenticate(field(formData, 'login', 160), String(formData.get('password') ?? ''));
-  if (!admin) return {error: 'That email or password is not correct.'};
+  const key = `login:${await clientAddress()}`;
+  if (await tooManyFailures(key, 6, 15 * 60 * 1000)) return {error: 'Too many failed attempts. Please wait 15 minutes and try again.'};
+  const admin = await authenticate(field(formData, 'login', 160), String(formData.get('password') ?? ''));
+  if (!admin) {await recordFailure(key); return {error: 'That email or password is not correct.'};}
   await startSession(admin);
-  logActivity(admin, 'Signed in');
+  await logActivity(admin, 'Signed in');
   redirect('/admin');
 }
 
@@ -27,44 +28,44 @@ export async function logout() {
 }
 
 // Submissions
-function submissionFrom(formData: FormData) {
-  const submission = getSubmission(Number(formData.get('id')));
+async function submissionFrom(formData: FormData) {
+  const submission = await getSubmission(Number(formData.get('id')));
   if (!submission) back('/admin/submissions', {error: 'That submission no longer exists.'});
   return submission;
 }
 
 export async function setSubmissionStatus(formData: FormData) {
   const admin = await requireAdmin('submissions');
-  const submission = submissionFrom(formData);
+  const submission = await submissionFrom(formData);
   const status = formData.get('status');
   if (!isStatus(status)) back(`/admin/submissions/${submission.id}`, {error: 'Choose a valid status.'});
-  updateSubmission(submission.id, {status});
-  logActivity(admin, `Marked ${submission.reference} as ${statusLabels[status]}`);
+  await updateSubmission(submission.id, {status});
+  await logActivity(admin, `Marked ${submission.reference} as ${statusLabels[status]}`);
   back(`/admin/submissions/${submission.id}`, {notice: 'status'});
 }
 
 export async function saveSubmissionNote(formData: FormData) {
   const admin = await requireAdmin('submissions');
-  const submission = submissionFrom(formData);
-  updateSubmission(submission.id, {note: field(formData, 'note', 4000)});
-  logActivity(admin, `Updated the note on ${submission.reference}`);
+  const submission = await submissionFrom(formData);
+  await updateSubmission(submission.id, {note: field(formData, 'note', 4000)});
+  await logActivity(admin, `Updated the note on ${submission.reference}`);
   back(`/admin/submissions/${submission.id}`, {notice: 'note'});
 }
 
 export async function resendSubmissionEmail(formData: FormData) {
   const admin = await requireAdmin('submissions');
-  const submission = submissionFrom(formData);
+  const submission = await submissionFrom(formData);
   await notifyAdmins(submission);
-  const updated = getSubmission(submission.id)!;
-  logActivity(admin, `Resent the notification for ${submission.reference}`);
+  const updated = (await getSubmission(submission.id))!;
+  await logActivity(admin, `Resent the notification for ${submission.reference}`);
   back(`/admin/submissions/${submission.id}`, updated.emailStatus === 'sent' ? {notice: 'emailed'} : {error: updated.emailError || 'The email could not be sent.'});
 }
 
 export async function removeSubmission(formData: FormData) {
   const admin = await requireAdmin('submissions.delete');
-  const submission = submissionFrom(formData);
+  const submission = await submissionFrom(formData);
   await deleteSubmission(submission.id);
-  logActivity(admin, `Deleted ${submission.reference} (${submission.name || 'anonymous'})`);
+  await logActivity(admin, `Deleted ${submission.reference} (${submission.name || 'anonymous'})`);
   back('/admin/submissions', {notice: 'deleted'});
 }
 
@@ -72,10 +73,10 @@ export async function markSubmissionsRead(formData: FormData) {
   const admin = await requireAdmin('submissions');
   const updated: string[] = [];
   for (const id of formData.getAll('id').map(Number).filter(Number.isInteger)) {
-    const submission = getSubmission(id);
-    if (submission?.status === 'new') {updateSubmission(id, {status: 'in-progress'}); updated.push(submission.reference);}
+    const submission = await getSubmission(id);
+    if (submission?.status === 'new') {await updateSubmission(id, {status: 'in-progress'}); updated.push(submission.reference);}
   }
-  if (updated.length) logActivity(admin, `Marked ${updated.join(', ')} as In progress`);
+  if (updated.length) await logActivity(admin, `Marked ${updated.join(', ')} as In progress`);
   back('/admin/submissions', {notice: 'status'});
 }
 
@@ -88,15 +89,15 @@ export async function saveSiteDetails(formData: FormData) {
   if (!isEmail(contactEmail)) back('/admin/site', {error: 'Enter a valid contact email address.'});
   if (facebook && !isWebUrl(facebook)) back('/admin/site', {error: 'The Facebook link must be a full web address, starting with https://.'});
   if (!announcement) back('/admin/site', {error: 'The announcement bar cannot be empty.'});
-  saveContent({contactEmail, facebook, announcement});
-  logActivity(admin, 'Updated site details');
+  await saveContent({contactEmail, facebook, announcement});
+  await logActivity(admin, 'Updated site details');
   refreshSite();
   back('/admin/site');
 }
 
 export async function saveCinema(formData: FormData) {
   const admin = await requireAdmin('content');
-  const content = readContent();
+  const content = await readContent();
   const id = field(formData, 'id', 40);
   const current = content.cinemas.find(cinema => cinema.id === id);
   if (!current) back('/admin/cinemas', {error: 'Unknown cinema.'});
@@ -119,11 +120,11 @@ export async function saveCinema(formData: FormData) {
     if ('error' in saved) fail(saved.error);
     else image = saved.path;
   }
-  saveContent({cinemas: content.cinemas.map(cinema => cinema.id !== id ? cinema : {
+  await saveContent({cinemas: content.cinemas.map(cinema => cinema.id !== id ? cinema : {
     ...cinema, ...links, name, phone: phone!, image, tagline: field(formData, 'tagline', 60), since: field(formData, 'since', 4),
     address: field(formData, 'address', 300), parking: field(formData, 'parking', 80), coordinates: {latitude, longitude},
   })});
-  logActivity(admin, `Updated the ${name} cinema details`);
+  await logActivity(admin, `Updated the ${name} cinema details`);
   refreshSite();
   back(`/admin/cinemas#${id}`);
 }
@@ -149,8 +150,8 @@ export async function saveUpcoming(formData: FormData) {
     if (!/^\/(images|media)\/[\w.\-()%]+$/.test(poster)) back('/admin/coming-soon', {error: `Add a poster image for ${title}.`});
     upcoming.push({id: /^[\w.\-]{1,80}$/.test(ids[index]) ? ids[index] : crypto.randomUUID(), title, poster});
   }
-  saveContent({upcoming});
-  logActivity(admin, `Updated the Coming soon list (${upcoming.length} movies)`);
+  await saveContent({upcoming});
+  await logActivity(admin, `Updated the Coming soon list (${upcoming.length} movies)`);
   refreshSite();
   back('/admin/coming-soon');
 }
@@ -166,8 +167,8 @@ export async function saveNotificationSettings(formData: FormData) {
   }
   const invalid = [...recipients, ...Object.values(overrides).flat()].find(value => !isEmail(value!));
   if (invalid) back('/admin/notifications', {error: `“${invalid}” is not a valid email address.`});
-  saveNotifications({recipients, overrides});
-  logActivity(admin, 'Updated notification recipients');
+  await saveNotifications({recipients, overrides});
+  await logActivity(admin, 'Updated notification recipients');
   back('/admin/notifications');
 }
 
@@ -177,15 +178,15 @@ export async function saveAutoReply(formData: FormData) {
   const message = String(formData.get('message') ?? '').replace(/\r\n/g, '\n').trim().slice(0, 3000);
   if (!subject || !message) back('/admin/notifications#auto-reply', {error: 'The automatic reply needs a subject and a message.'});
   const forms = formData.getAll('forms').filter(isFormType);
-  saveNotifications({autoReply: {enabled: formData.get('enabled') === 'on', forms, subject, message}});
-  logActivity(admin, `Updated the automatic reply (${formData.get('enabled') === 'on' ? 'on' : 'off'})`);
+  await saveNotifications({autoReply: {enabled: formData.get('enabled') === 'on', forms, subject, message}});
+  await logActivity(admin, `Updated the automatic reply (${formData.get('enabled') === 'on' ? 'on' : 'off'})`);
   back('/admin/notifications#auto-reply', {notice: 'reply'});
 }
 
 export async function sendTestEmail(formData: FormData) {
   const admin = await requireAdmin('settings');
   const kind = formData.get('kind') === 'reply' ? 'reply' : 'notification';
-  const settings = readNotifications();
+  const settings = await readNotifications();
   const to = settings.recipients.length ? settings.recipients : envRecipients();
   const anchor = kind === 'reply' ? '#auto-reply' : '';
   if (!emailConfigured()) back('/admin/notifications' + anchor, {error: 'Resend is not configured. Set RESEND_API_KEY and RESEND_FROM on the server.'});
@@ -198,6 +199,6 @@ export async function sendTestEmail(formData: FormData) {
   } catch (error) {
     back('/admin/notifications' + anchor, {error: `Resend rejected the email: ${error instanceof Error ? error.message : String(error)}`});
   }
-  logActivity(admin, `Sent a test ${kind === 'reply' ? 'automatic reply' : 'notification'}`);
+  await logActivity(admin, `Sent a test ${kind === 'reply' ? 'automatic reply' : 'notification'}`);
   back('/admin/notifications' + anchor, {notice: 'test'});
 }

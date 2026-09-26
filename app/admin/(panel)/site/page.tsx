@@ -9,7 +9,7 @@ export const metadata: Metadata = {title: 'Site details'};
 
 export default async function SiteDetails({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('content');
-  const content = readContent();
+  const content = await readContent();
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">WEBSITE</span><h1>Site details</h1>
       <p className="admin-subtitle">Shown in the header, footer, and contact page.</p></div></header>

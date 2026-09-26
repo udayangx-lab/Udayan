@@ -25,11 +25,11 @@ export async function submitForm(type: string, _previous: FormState, formData: F
   // Bots fill the hidden field or submit instantly. Pretend success so they do not retry.
   const started = Number(formData.get('startedAt'));
   if (formData.get('website') || (started && Date.now() - started < 2000)) return {status: 'success', reference: ''};
-  if (!allow(`form:${type}:${await clientAddress()}`, 5, 10 * 60 * 1000)) {
+  if (!await allow(`form:${type}:${await clientAddress()}`, 5, 10 * 60 * 1000)) {
     return {status: 'error', message: 'Too many submissions from this connection. Please try again in a few minutes.', values: echo(formData)};
   }
 
-  const content = readContent();
+  const content = await readContent();
   const {values, errors} = validateSubmission(type, formData, content.cinemas.map(cinema => cinema.id), content.formOptions);
   const fileField = definition.fields.find(field => field.type === 'file');
   const file = fileField ? formData.get(fileField.name) : null;
@@ -43,7 +43,7 @@ export async function submitForm(type: string, _previous: FormState, formData: F
     if ('error' in saved) return {status: 'error', message: 'Please check the highlighted fields.', errors: {[fileField.name]: saved.error}, values: echo(formData)};
     attachment = saved;
   }
-  const submission = createSubmission(type, values, attachment);
+  const submission = await createSubmission(type, values, attachment);
   // The record is safe in the admin panel; email delivery happens after the visitor sees confirmation.
   after(async () => {await notifyAdmins(submission); await sendAutoReply(submission);});
   return {status: 'success', reference: submission.reference};

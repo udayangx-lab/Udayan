@@ -8,12 +8,12 @@ export const metadata: Metadata = {title: 'Activity & backup'};
 
 export default async function Activity() {
   await requireAdmin('settings');
-  const entries = listActivity(300);
+  const entries = await listActivity(300);
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">SETTINGS</span><h1>Activity & backup</h1>
       <p className="admin-subtitle">Every sign-in and change made in the admin panel, newest first.</p></div>
       <a className="admin-button primary" href="/admin/backup"><Download size={16}/>Download backup</a></header>
-    <div className="admin-callout"><div><strong>Backups</strong><p>The download is a .tar archive with the database (submissions, content, accounts, settings), every CV, and every uploaded photo. Store it somewhere safe. Server-level backups of the storage folder are still recommended.</p></div></div>
+    <div className="admin-callout"><div><strong>Backups</strong><p>The download is a JSON file with every submission, all website content and settings, staff accounts (without passwords), and this activity log. CVs and photos stay in the database; Neon’s point-in-time restore (Neon console → Branches → Restore) covers everything, including them.</p></div></div>
     <section className="admin-panel">
       {!entries.length ? <p className="admin-empty">No activity yet.</p> : <div className="admin-table-wrap"><table className="admin-table">
         <thead><tr><th>When (IST)</th><th>Who</th><th>What</th></tr></thead>

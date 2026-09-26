@@ -11,7 +11,7 @@ export const metadata: Metadata = {title: 'Staff accounts'};
 
 export default async function Users({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   const admin = await requireAdmin('settings');
-  const users = listUsers();
+  const users = await listUsers();
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">SETTINGS</span><h1>Staff accounts</h1>
       <p className="admin-subtitle">Give each person their own sign-in. Everything they change is recorded under Activity.</p></div></header>

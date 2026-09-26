@@ -9,7 +9,7 @@ export const metadata: Metadata = {title: 'Cinemas'};
 
 export default async function Cinemas({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('content');
-  const {cinemas} = readContent();
+  const {cinemas} = await readContent();
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">WEBSITE</span><h1>Cinemas</h1>
       <p className="admin-subtitle">Used across the site: the cinema picker, contact cards, footer, booking links, and nearest-cinema detection.</p></div></header>

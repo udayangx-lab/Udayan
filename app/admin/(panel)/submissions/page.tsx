@@ -19,10 +19,10 @@ export default async function Submissions({searchParams}: {searchParams: Search}
   const value = (key: string) => typeof params[key] === 'string' ? params[key] as string : '';
   const filters = {type: value('type'), status: value('status'), query: value('q')};
   const page = Math.max(1, Number(value('page')) || 1);
-  const {total, submissions} = listSubmissions(filters, page);
+  const {total, submissions} = await listSubmissions(filters, page);
   const pages = Math.max(1, Math.ceil(total / 25));
   const query = (changes: Record<string, string>) => '?' + new URLSearchParams(Object.entries({type: filters.type, status: filters.status, q: filters.query, ...changes}).filter(([, v]) => v));
-  const cinemaNames = Object.fromEntries(readContent().cinemas.map(cinema => [cinema.id, cinema.name]));
+  const cinemaNames = Object.fromEntries((await readContent()).cinemas.map(cinema => [cinema.id, cinema.name]));
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">FORM RECORDS</span><h1>Submissions</h1></div>
       <a className="admin-button" href={`/admin/export${query({})}`}><Download size={16}/>Export CSV</a></header>

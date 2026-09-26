@@ -1,9 +1,8 @@
 import {randomUUID} from 'node:crypto';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import {mediaDir, uploadsDir} from './db';
+import {query} from './db';
 import {maxDocumentBytes} from '@/lib/forms';
 
+// Files live in Postgres: CVs are private (served only to signed-in admins), photos are public under /media.
 export type Attachment = {file: string; name: string; type: string; size: number};
 type Kind = {ext: string[]; mime: string; matches: (bytes: Buffer) => boolean};
 
@@ -19,7 +18,6 @@ const images: Kind[] = [
   {ext: ['webp'], mime: 'image/webp', matches: bytes => bytes.subarray(0, 4).toString() === 'RIFF' && bytes.subarray(8, 12).toString() === 'WEBP'},
 ];
 export const maxImageBytes = 3 * 1024 * 1024;
-export const mediaTypes: Record<string, string> = {jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp'};
 
 // Trust the file's contents, not the browser-supplied type: the name must agree with the bytes.
 async function inspect(file: File, kinds: Kind[], limit: number, description: string) {
@@ -30,28 +28,32 @@ async function inspect(file: File, kinds: Kind[], limit: number, description: st
   return kind ? {bytes, kind} as const : {error: `Upload ${description}.`} as const;
 }
 
+async function store(kind: 'document' | 'image', ext: string, name: string, type: string, bytes: Buffer) {
+  const id = `${randomUUID()}.${ext}`;
+  await query('INSERT INTO files (id, kind, name, type, size, data) VALUES ($1, $2, $3, $4, $5, $6)', [id, kind, name, type, bytes.length, bytes.toString('base64')]);
+  return id;
+}
+
 export async function saveDocument(file: File): Promise<Attachment | {error: string}> {
   const result = await inspect(file, documents, maxDocumentBytes, 'a PDF or Word document');
   if ('error' in result) return {error: result.error!};
-  const stored = `${randomUUID()}.${result.kind.ext[0]}`;
-  await fs.writeFile(path.join(uploadsDir, stored), result.bytes, {flag: 'wx'});
   const name = file.name.replace(/[^\w.\- ()]+/g, '_').slice(-120) || `cv.${result.kind.ext[0]}`;
+  const stored = await store('document', result.kind.ext[0], name, result.kind.mime, result.bytes);
   return {file: stored, name, type: result.kind.mime, size: file.size};
 }
 
 export async function saveImage(file: File): Promise<{path: string} | {error: string}> {
   const result = await inspect(file, images, maxImageBytes, 'a JPG, PNG, or WebP image');
   if ('error' in result) return {error: result.error!};
-  const stored = `${randomUUID()}.${result.kind.ext[0]}`;
-  await fs.writeFile(path.join(mediaDir, stored), result.bytes, {flag: 'wx'});
-  return {path: '/media/' + stored};
+  return {path: '/media/' + await store('image', result.kind.ext[0], file.name.slice(-120), result.kind.mime, result.bytes)};
 }
 
 const storedName = /^[0-9a-f-]{36}\.(pdf|docx|doc|jpg|png|webp)$/;
-export async function readStored(directory: 'uploads' | 'media', file: string) {
-  if (!storedName.test(file)) return null;
-  try {return await fs.readFile(path.join(directory === 'uploads' ? uploadsDir : mediaDir, file));} catch {return null;}
+export async function readStored(kind: 'document' | 'image', id: string) {
+  if (!storedName.test(id)) return null;
+  const [row] = await query<{type: string; data: string}>('SELECT type, data FROM files WHERE id = $1 AND kind = $2', [id, kind]);
+  return row ? {type: row.type, bytes: Buffer.from(row.data, 'base64')} : null;
 }
-export async function removeStored(file: string) {
-  if (storedName.test(file)) await fs.unlink(path.join(uploadsDir, file)).catch(() => {});
+export async function removeStored(id: string) {
+  if (storedName.test(id)) await query("DELETE FROM files WHERE id = $1 AND kind = 'document'", [id]);
 }

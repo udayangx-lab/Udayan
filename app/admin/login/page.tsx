@@ -9,7 +9,7 @@ export const metadata: Metadata = {title: 'Sign in'};
 export default async function LoginPage({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   if (await getAdmin()) redirect('/admin');
   const {notice} = await searchParams;
-  const ready = adminConfigured() || listUsers().some(user => user.active);
+  const ready = adminConfigured() || (await listUsers()).some(user => user.active);
   return <main className="admin-login">
     <div className="admin-login-card">
       <img src="/images/udayancinema-logo.png" alt="" width="82" height="76"/>

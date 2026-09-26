@@ -12,10 +12,10 @@ export const metadata: Metadata = {title: 'Email notifications'};
 
 export default async function Notifications({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('settings');
-  const settings = readNotifications();
+  const settings = await readNotifications();
   const fallback = envRecipients();
   const reply = settings.autoReply;
-  const content = readContent();
+  const content = await readContent();
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">SETTINGS</span><h1>Email notifications</h1>
       <p className="admin-subtitle">Every form submission is saved in this panel and emailed to the addresses below through Resend.</p></div></header>

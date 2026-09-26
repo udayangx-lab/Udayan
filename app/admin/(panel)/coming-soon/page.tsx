@@ -9,7 +9,7 @@ export const metadata: Metadata = {title: 'Coming soon'};
 
 export default async function ComingSoon({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('content');
-  const {upcoming} = readContent();
+  const {upcoming} = await readContent();
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">WEBSITE</span><h1>Coming soon</h1>
       <p className="admin-subtitle">The “Coming soon” tab on the home and movies pages. Now-showing titles and showtimes update automatically from District.</p></div></header>

@@ -25,7 +25,8 @@ export type FormState = {
 export const ratingLabels = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 export const allCinemasValue = 'all';
 export const documentTypes = '.pdf,.doc,.docx';
-export const maxDocumentBytes = 5 * 1024 * 1024;
+// Vercel limits request bodies to 4.5 MB, so CVs must stay under that with the other fields.
+export const maxDocumentBytes = 4 * 1024 * 1024;
 
 const name: FormField = {name: 'name', label: 'Your name', type: 'text', required: true, autoComplete: 'name', placeholder: 'Full name'};
 const phone: FormField = {name: 'phone', label: 'Mobile number', type: 'tel', required: true, autoComplete: 'tel-national', placeholder: '10-digit mobile number'};
@@ -75,7 +76,7 @@ export const formDefinitions: Record<FormType, FormDefinition> = {
       {name: 'role', label: 'Role you’re interested in', type: 'text', placeholder: 'e.g. Front desk, projection, café'},
       {name: 'cinema', label: 'Preferred location', type: 'cinema', allCinemas: 'Either location'},
       {name: 'message', label: 'Your message', type: 'textarea', wide: true, placeholder: 'Experience, availability, or anything else (optional)'},
-      {name: 'cv', label: 'Upload CV', type: 'file', required: true, wide: true, hint: 'PDF or Word document, up to 5 MB.'},
+      {name: 'cv', label: 'Upload CV', type: 'file', required: true, wide: true, hint: 'PDF or Word document, up to 4 MB.'},
     ],
   },
   feedback: {
