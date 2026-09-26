@@ -9,3 +9,4 @@ out/
 
 storage/
 .listings-sync.lock
+.netlify/

@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-// Production (Vercel): Neon Postgres over HTTP, from DATABASE_URL (set by the Vercel Neon integration).
+// Production (Netlify or Vercel): Neon Postgres over HTTP, from DATABASE_URL (or the variable set by the
+// Netlify or Vercel Neon integration).
 // Local development and tests: PGlite, a real Postgres engine embedded in Node, stored in storage/pglite.
 type Query = <T = Record<string, unknown>>(text: string, params?: unknown[]) => Promise<T[]>;
 
-const connectionString = () => process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+const connectionString = () => process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL || process.env.POSTGRES_URL || '';
 export const usingNeon = () => Boolean(connectionString());
 
 const schema = [
@@ -44,7 +45,8 @@ async function connect(): Promise<Query> {
     const sql = neon(connectionString());
     run = async (text, params = []) => await sql.query(text, params) as never;
   } else {
-    if (process.env.VERCEL) throw new Error('DATABASE_URL is not set. Connect the Neon integration in Vercel → Project → Storage, then redeploy.');
+    // Serverless hosts have no lasting disk, so the embedded database must never run there.
+    if (process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) throw new Error('DATABASE_URL is not set. Add your Neon connection string to the site’s environment variables, then redeploy.');
     const {PGlite} = await import('@electric-sql/pglite');
     const directory = path.resolve(process.env.DATA_DIR || 'storage', 'pglite');
     // storage/ is not in Git, so a fresh clone has to create it.

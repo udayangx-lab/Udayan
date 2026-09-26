@@ -53,7 +53,7 @@ export function mergeMovies(pages) {
 }
 
 async function fetchPage(url, source, fetchImpl) {
-  const response = await fetchImpl(url, {signal: AbortSignal.timeout(20000), headers: {'User-Agent': 'UdayanCinemaListings/1.0', 'Accept': 'text/html'}});
+  const response = await fetchImpl(url, {signal: AbortSignal.timeout(8000), headers: {'User-Agent': 'UdayanCinemaListings/1.0', 'Accept': 'text/html'}});
   if (!response.ok) throw new Error(`District returned HTTP ${response.status}`);
   return parseDistrict(await response.text(), source);
 }

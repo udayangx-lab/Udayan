@@ -1,0 +1,13 @@
+# Netlify builds Next.js with its official runtime (@netlify/plugin-nextjs), detected automatically.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Skip Next.js telemetry during builds.
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[functions]
+  # The scheduled showtimes refresh lives in netlify/functions.
+  directory = "netlify/functions"

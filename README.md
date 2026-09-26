@@ -14,18 +14,22 @@ npm run dev
 
 Open http://localhost:3000 and sign in to http://localhost:3000/admin as **admin** with `ADMIN_PASSWORD`. Without `DATABASE_URL`, development uses PGlite, a real Postgres engine embedded in Node, stored in `storage/pglite` (ignored by Git). To work against Neon instead, put a Neon connection string (ideally a separate Neon branch) in `DATABASE_URL`.
 
-## Deploy to Vercel with Neon
+## Deploy to Netlify with Neon
 
-1. Import the GitHub repository in Vercel. The framework preset is Next.js; no build settings need to change.
-2. In **Vercel → Project → Storage**, add **Neon** (Postgres) and connect it to the project. This sets `DATABASE_URL`. The tables are created automatically on the first request.
-3. In **Settings → Environment Variables**, add `ADMIN_PASSWORD`, `RESEND_API_KEY`, `RESEND_FROM`, `ADMIN_EMAIL`, `SITE_URL`, and `CRON_SECRET` (see `.env.example`).
-4. Deploy, then sign in at `/admin` as **admin**, create personal staff accounts, set email recipients, and send a test email.
+1. In Netlify, **Add new site → Import an existing project**, and pick this GitHub repository. `netlify.toml` sets the build (`npm run build`, Node 22), and Netlify's Next.js runtime is applied automatically.
+2. In **Site configuration → Environment variables**, add:
+   - `DATABASE_URL`: the Neon connection string for the `production` branch of project `gentle-forest-41793472` (Neon console → Connect, or `npx neon@latest connection-string production --project-id gentle-forest-41793472`). If you connect Neon through Netlify's own integration instead, it sets `NETLIFY_DATABASE_URL`, which also works.
+   - `ADMIN_PASSWORD`, `RESEND_API_KEY`, `RESEND_FROM`, `ADMIN_EMAIL`, `SITE_URL` (your Netlify or custom domain), and `CRON_SECRET` (see `.env.example`).
+3. Deploy. The tables are created on the first request, and the first showtimes request fetches District.
+4. Sign in at `/admin` as **admin**, create personal staff accounts, set email recipients, and send a test email.
+
+On Netlify, `netlify/functions/refresh-listings.mjs` is a scheduled function that calls `/api/cron/listings` every 30 minutes (published production deploys only). On Vercel, `vercel.json` does the same with Vercel Cron; add Neon under Project → Storage and the same environment variables.
 
 Where things live:
 
 - **Neon Postgres**: submissions, website content, settings, staff accounts, activity, rate limits, the showtimes feed, and uploaded files (CVs are private; photos are public under `/media/…` with permanent cache headers, so Vercel's CDN serves repeat requests).
-- **Showtimes**: `vercel.json` schedules `/api/cron/listings` every 30 minutes, protected by `CRON_SECRET`. Vercel's Hobby plan runs cron jobs only once a day, so the site also refreshes itself whenever a visitor loads showtimes older than 30 minutes. A lease row prevents overlapping refreshes.
-- **Limits**: Vercel accepts request bodies up to 4.5 MB, so CVs are limited to 4 MB and photos (3 MB each) upload one at a time.
+- **Showtimes**: a Netlify scheduled function (or Vercel Cron) calls `/api/cron/listings` every 30 minutes, protected by `CRON_SECRET`. The site also refreshes itself whenever a visitor loads showtimes older than 30 minutes, so listings stay current even if a schedule is missed. A lease row prevents overlapping refreshes.
+- **Limits**: serverless functions accept request bodies of a few MB (4.5 MB on Vercel, 6 MB on Netlify), so CVs are limited to 4 MB and photos (3 MB each) upload one at a time.
 - **Backups**: Neon keeps point-in-time history (restore from the Neon console). The admin panel's **Download backup** exports all records as JSON.
 
 Checks before a release:
@@ -66,7 +70,7 @@ Exact source values retained in CSS: main red `#BB0504`, accent `#E7000B`, burgu
 
 ## Automatic listings updates
 
-Showtimes come from the two public District cinema pages. The feed is refreshed by Vercel Cron every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can also press **Refresh now** under Now showing. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
+Showtimes come from the two public District cinema pages. The feed is refreshed by the scheduled function every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can also press **Refresh now** under Now showing. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
 
 - Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. Configuration and the extractor live in `scripts/lib/listings.mjs`.
 - The extractor reads `__NEXT_DATA__` from public HTML without credentials, validates the cinema identity, and gathers up to seven available dates. Unzoned District timestamps are interpreted as UTC and displayed in Asia/Kolkata.
