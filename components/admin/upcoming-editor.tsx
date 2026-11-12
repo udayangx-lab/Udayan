@@ -24,7 +24,7 @@ export default function UpcomingEditor({movies, action}: {movies: UpcomingMovie[
       <input type="hidden" name="id" value={row.id}/><input type="hidden" name="poster" value={row.poster}/>
       <label className="admin-poster">{row.poster ? <img src={row.poster} alt=""/> : <span><ImagePlus size={22}/>Poster</span>}
         {row.busy && <span className="admin-image-busy"><LoaderCircle size={20}/></span>}
-        <input type="file" accept="image/jpeg,image/png,image/webp" required={!row.poster} aria-label={`Poster for movie ${index + 1}`}
+        <input type="file" accept="image/jpeg,image/png,image/webp" aria-label={`Poster for movie ${index + 1}`}
           onChange={event => {
             const file = event.target.files?.[0];
             if (!file) return;
@@ -33,8 +33,12 @@ export default function UpcomingEditor({movies, action}: {movies: UpcomingMovie[
           }}/></label>
       <div className="admin-poster-fields">
         <label>Title<input name="title" defaultValue={row.title} required maxLength={120}/></label>
+        <div className="admin-poster-pair">
+          <label>Release date<input type="date" name="releaseDate" defaultValue={row.releaseDate || ''}/></label>
+          <label>Language<input name="language" defaultValue={row.language || ''} maxLength={60} placeholder="e.g. Bengali"/></label>
+        </div>
         {row.error ? <small className="admin-field-error" role="alert">{row.error}</small>
-          : <small>{row.busy ? 'Uploading…' : row.poster ? 'Click the poster to replace it. JPG, PNG, or WebP up to 3 MB.' : 'Click the box to add a poster. JPG, PNG, or WebP up to 3 MB.'}</small>}
+          : <small>{row.busy ? 'Uploading…' : row.poster ? 'Click the poster to replace it. JPG, PNG, or WebP up to 3 MB.' : 'Optional: click the box to add a poster (JPG, PNG, or WebP up to 3 MB).'}</small>}
       </div>
       <div className="admin-row-tools">
         <button type="button" disabled={index === 0} onClick={() => move(index, -1)} aria-label="Move up"><ArrowUp size={16}/></button>

@@ -2,18 +2,20 @@ import type {Metadata} from 'next';
 import {CircleAlert, CircleCheck, RefreshCw} from 'lucide-react';
 import {requireAdmin} from '@/lib/server/auth';
 import {readContent} from '@/lib/server/content';
-import {readListings, readOverrides} from '@/lib/server/listings';
+import {readListings, readOverrides, readRuns, readSyncSettings} from '@/lib/server/listings';
+import {dateLabel} from '@/lib/listings';
 import {formatDate} from '@/components/admin/submission-table';
 import Notice from '@/components/admin/notice';
 import {SubmitButton} from '@/components/admin/controls';
-import {refreshNowShowing, saveMovieOverride} from '../../listings-actions';
+import {refreshNowShowing, saveMovieOverride, setAutomaticSync} from '../../listings-actions';
+
+const triggers = {scheduled: 'Scheduled', visitor: 'Visitor-triggered', admin: 'Manual'} as const;
 
 export const metadata: Metadata = {title: 'Now showing'};
 
 export default async function NowShowing({searchParams}: {searchParams: Promise<Record<string, string | string[] | undefined>>}) {
   await requireAdmin('content');
-  const feed = await readListings();
-  const overrides = await readOverrides();
+  const [feed, overrides, sync, runs] = await Promise.all([readListings(), readOverrides(), readSyncSettings(), readRuns()]);
   const cinemas = (await readContent()).cinemas;
   const now = Date.now();
   // One row per movie variant (title + language + format), across both cinemas.
@@ -27,9 +29,20 @@ export default async function NowShowing({searchParams}: {searchParams: Promise<
   }
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">WEBSITE</span><h1>Now showing</h1>
-      <p className="admin-subtitle">Movies and showtimes are read from District every 30 minutes. Hide a listing or correct its title or poster here. Corrections stay in place across refreshes.</p></div>
+      <p className="admin-subtitle">Movies and showtimes for every date District has opened are read every 30 minutes. Each showtime opens seat selection for that show on District. Hide a listing or correct its title or poster here; corrections stay in place across refreshes.</p></div>
       <form action={refreshNowShowing}><SubmitButton pending="Refreshing from District…"><RefreshCw size={15}/>Refresh now</SubmitButton></form></header>
     <Notice searchParams={searchParams}/>
+    <section className="admin-panel admin-sync-control">
+      <form action={setAutomaticSync} className="admin-sync-switch">
+        <label className="admin-check"><input type="checkbox" name="automatic" defaultChecked={sync.automatic}/>Fetch from District automatically every 30 minutes</label>
+        <SubmitButton className="admin-button small">Save</SubmitButton>
+      </form>
+      <p className="admin-footnote">{sync.automatic ? 'On: the schedule and visitors keep showtimes and Coming soon current.' : 'Off: nothing is fetched until you press Refresh now. Visitors see the last saved listings with a “delayed” notice.'}</p>
+      <ul className="admin-runs">{(Object.keys(triggers) as (keyof typeof triggers)[]).map(trigger => {
+        const run = runs[trigger];
+        return <li key={trigger}><strong>{triggers[trigger]}</strong>{run ? <>{` ${run.status} · ${formatDate(run.at)} IST`}{run.detail && <small>{run.detail}</small>}</> : ' no runs recorded yet'}</li>;
+      })}</ul>
+    </section>
     <section className="admin-sync">{cinemas.map(cinema => {
       const venue = feed?.venues[cinema.id];
       const age = venue?.lastSuccessAt ? now - Date.parse(venue.lastSuccessAt) : Infinity;
@@ -38,7 +51,7 @@ export default async function NowShowing({searchParams}: {searchParams: Promise<
         <strong>{cinema.name}: {venue ? `${venue.movies.length} listings` : 'no data yet'}</strong>
         <p>{venue?.lastSuccessAt ? `Last successful update ${formatDate(venue.lastSuccessAt)} IST.` : 'Never updated successfully.'}
           {venue?.lastAttemptAt && venue.lastAttemptAt !== venue.lastSuccessAt ? ` Last attempt ${formatDate(venue.lastAttemptAt)} IST.` : ''}
-          {venue?.error ? ` Error: ${venue.error.replace(/\.?$/, '.')}` : ''}{venue?.skippedDates?.length ? ` District did not provide shows for ${venue.skippedDates.join(', ')}; those dates appear once they reach the main listing.` : ''}{!healthy && venue?.lastSuccessAt ? ' The website shows a “delayed” notice until the next successful update.' : ''}</p></div></div>;
+          {venue?.error ? ` Error: ${venue.error.replace(/\.?$/, '.')}` : ''}{venue?.dates?.length ? ` Dates on District: ${venue.dates.map(dateLabel).join(', ')}.` : ''}{venue?.failedDates?.length ? ` District did not answer correctly for ${venue.failedDates.map(dateLabel).join(', ')}; the shows from the last good update are kept for those dates.` : ''}{!healthy && venue?.lastSuccessAt ? ' The website shows a “delayed” notice until the next successful update.' : ''}</p></div></div>;
     })}</section>
     <section className="admin-panel">
       <div className="admin-panel-head"><h2>{movies.size} listings</h2></div>

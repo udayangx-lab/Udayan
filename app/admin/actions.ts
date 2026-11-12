@@ -134,6 +134,8 @@ export async function saveUpcoming(formData: FormData) {
   const ids = formData.getAll('id').map(String);
   const titles = formData.getAll('title').map(value => String(value).trim());
   const posters = formData.getAll('poster').map(String);
+  const releaseDates = formData.getAll('releaseDate').map(String);
+  const languages = formData.getAll('language').map(value => String(value).trim().slice(0, 60));
   const files = formData.getAll('file');
   if (ids.length > 40) back('/admin/coming-soon', {error: 'Keep the list to 40 movies or fewer.'});
   const upcoming: UpcomingMovie[] = [];
@@ -147,13 +149,14 @@ export async function saveUpcoming(formData: FormData) {
       if ('error' in saved) back('/admin/coming-soon', {error: `${title}: ${saved.error}`});
       else poster = saved.path;
     }
-    if (!/^\/(images|media)\/[\w.\-()%]+$/.test(poster)) back('/admin/coming-soon', {error: `Add a poster image for ${title}.`});
-    upcoming.push({id: /^[\w.\-]{1,80}$/.test(ids[index]) ? ids[index] : crypto.randomUUID(), title, poster});
+    if (poster && !/^\/(images|media)\/[\w.\-()%]+$/.test(poster)) back('/admin/coming-soon#curated', {error: `The poster for ${title} could not be used. Upload it again.`});
+    const releaseDate = /^\d{4}-\d{2}-\d{2}$/.test(releaseDates[index] || '') ? releaseDates[index] : undefined;
+    upcoming.push({id: /^[\w.\-]{1,80}$/.test(ids[index]) ? ids[index] : crypto.randomUUID(), title, poster, ...(releaseDate ? {releaseDate} : {}), ...(languages[index] ? {language: languages[index]} : {})});
   }
   await saveContent({upcoming});
   await logActivity(admin, `Updated the Coming soon list (${upcoming.length} movies)`);
   refreshSite();
-  back('/admin/coming-soon');
+  back('/admin/coming-soon#curated');
 }
 
 // Notifications

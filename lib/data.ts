@@ -4,7 +4,8 @@ export type Cinema = {
   id: string; name: string; tagline: string; since: string; address: string; phone: string; parking: string;
   booking: string; district: string; maps: string; image: string; coordinates: {latitude: number; longitude: number};
 };
-export type UpcomingMovie = {id: string; title: string; poster: string};
+/** An admin-added Coming soon title. It stays listed until its release date (if given) has passed. */
+export type UpcomingMovie = {id: string; title: string; poster: string; releaseDate?: string; language?: string};
 export type Photo = {id: string; src: string; alt: string};
 export type IconItem = {id: string; icon: string; text: string};
 export type Feature = {id: string; icon: string; label: string; title: string; text: string};
@@ -50,18 +51,8 @@ export const cinemas: Cinema[] = [
   { id: 'sheoraphuli', coordinates: {latitude: 22.774846, longitude: 88.326738}, district: 'https://www.district.in/movies/udayan-cinema-sheoraphuli-in-howrah-CD1102426', name: 'Sheoraphuli', tagline: 'Grand Trunk Road', since: '1946', address: '35, Grand Trunk Road, Sheoraphuli, Hooghly, West Bengal 712223', phone: '7003697009', parking: 'Two-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/hooghly/udayan-cinema-sheoraphuli/buytickets/UCPL/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Sheoraphuli', image: '/images/gallery-2.jpg' },
   { id: 'tarakeswar', coordinates: {latitude: 22.874893, longitude: 88.012038}, district: 'https://www.district.in/movies/udayan-cinema-tarakeswar-in-hoogly-CD1102427', name: 'Tarakeswar', tagline: 'Silvision Mall', since: '2025', address: '2nd Floor, Silvision Mall, Gure, Tarakeswar, West Bengal 712410', phone: '7679088942', parking: 'Two & four-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/tarkeshwar/udayan-cinema-tarkeshwar/buytickets/UUCT/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Tarakeswar', image: '/images/WhatsApp-Image-2025-11-03-at-9.45.01-AM.jpeg' },
 ];
-export const upcoming: UpcomingMovie[] = [
- {title:'The Eken: Kerela-E-Kurukshetra',image:'The-Eken_Poster.jpg'},
- {title:'Bohurupi: The Golden Daku',image:'The-Golden-Daku.jpg'},
- {title:'Emperor Vs Sarat Chandra',image:'Emperor-Vs-Sarat-Chandra.jpg'},
- {title:'Drishyam 3',image:'Drishyam-3-827x1024.jpg'},
- {title:'Vvaan',image:'Vvaan.jpg'},
- {title:'Avengers Doomsday',image:'Avengers-Doomsday.jpg'},
- {title:'Ramayan',image:'ramayana-26.jpg'},
- {title:'Eetha',image:'Eetha.jpg'},
- {title:'Gabru',image:'gabru-819x1024.jpg'},
- {title:'Maatrubhumi',image:'Maatrubhumi.jpg'},
-].map(movie => ({id: movie.image, title: movie.title, poster: '/images/' + movie.image}));
+// Titles the cinema adds itself in Admin → Coming soon. District's upcoming releases are added automatically.
+export const upcoming: UpcomingMovie[] = [];
 
 const choices = (prefix: string, labels: string[]): Choice[] => labels.map((label, index) => ({id: `${prefix}-${index + 1}`, label}));
 const pageImages = (count: number, src: (index: number) => string, alt: (index: number) => string): Photo[] =>

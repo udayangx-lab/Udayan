@@ -43,7 +43,7 @@ test('a failed refresh preserves prior successful listings and records failure i
   assert.deepEqual(result.venues.tarakeswar.movies, []);
   assert.equal(result.version, 1);
 });
-test('a dated page District renders only in the browser is skipped instead of failing the venue', async () => {
+test('a dated page without show data is retried, then reported without failing the venue', async () => {
   const {indiaDate} = await import('../scripts/lib/listings.mjs');
   const today = indiaDate(), tomorrow = indiaDate(new Date(Date.now() + 864e5));
   const source = sources[0];
@@ -51,9 +51,11 @@ test('a dated page District renders only in the browser is skipped instead of fa
   const state = {meta: {cinema: {id: Number(source.districtId)}}, data: {sessionDates: [today, tomorrow]}, arrangedSessions: [{entityCode: 7, entityName: 'Today film', data: {}, sessions: [{cid: Number(source.districtId), sid: '9', showTime: later, lang: 'Bengali', scrnFmt: '2D'}]}]};
   const main = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({props: {pageProps: {data: {cinemaId: source.districtId, serverState: {[source.districtId]: state}}}}})}</script>`;
   const clientOnly = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({props: {pageProps: {data: {cinemaId: source.districtId, isCSR: true, serverState: {}}}}})}</script>`;
-  const result = await collectListings({log: quiet, fetchImpl: async url => ({ok: true, text: async () => url.includes('fromdate') ? clientOnly : url.includes(source.districtId) ? main : page(sources[1], [])})});
+  const requested = [];
+  const result = await collectListings({log: quiet, retryDelayMs: 0, fetchImpl: async url => { requested.push(url); return {ok: true, text: async () => url.includes('fromdate') ? clientOnly : url.includes(source.districtId) ? main : page(sources[1], [])}; }});
   const venue = result.venues[source.id];
   assert.equal(venue.error, null);
   assert.equal(venue.movies[0].title, 'Today film');
-  assert.ok(venue.skippedDates.length >= 1);
+  assert.deepEqual(venue.failedDates, [tomorrow]);
+  assert.equal(requested.filter(url => url.includes(`fromdate=${tomorrow}`)).length, 3);
 });
