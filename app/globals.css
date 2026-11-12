@@ -90,15 +90,15 @@ html{scrollbar-gutter:stable}
 @media(max-width:950px){.movie-grid.movie-carousel{grid-auto-columns:calc((100% - 36px)/3);gap:18px}}
 @media(max-width:650px){.movie-grid.movie-carousel{grid-auto-columns:calc((100% - 22.5px)/2.15);gap:15px}.carousel-hint{display:none}.movie-carousel-controls{margin-top:-8px;margin-bottom:14px}.carousel-count{font-size:11px}.carousel-arrow{width:38px;height:38px}.movie-carousel .poster-action{gap:6px;font-size:10px}.movie-carousel .poster-action>svg{width:14px;height:14px;padding:4px}}
 
-/* Dated listings and booking platform selection. */
+/* Dated listings. */
 button.poster-link{width:100%;padding:0;border:0;text-align:left;color:inherit;font:inherit}
 .show-schedule{margin:-8px 0 25px}.show-dates{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px}.show-dates:empty{display:none}.show-dates button{flex-shrink:0;background:#fff;color:var(--text);border:1px solid var(--line);padding:9px 14px;border-radius:4px;font-size:12px}.show-dates button.selected{background:var(--red);color:#fff;border-color:var(--red)}
 .sync-status{font-size:11px;color:var(--muted)}.sync-status:not(.stale):before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#21824c;margin-right:7px}.sync-warning{font-size:12px;color:#8b540c;margin-top:7px}
-.show-times{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.show-times button{background:#fff;color:var(--red);border:1px solid #dfb5b5;font-size:12px;font-weight:600;padding:7px 10px;border-radius:4px}.show-times button:is(:hover,:focus-visible){background:var(--red);color:#fff;border-color:var(--red)}
+.show-times{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.show-times :is(button,a){background:#fff;color:var(--red);border:1px solid #dfb5b5;font-size:12px;font-weight:600;padding:7px 10px;border-radius:4px}.show-times :is(button,a):is(:hover,:focus-visible){background:var(--red);color:#fff;border-color:var(--red)}
 .movie-empty{padding:35px;background:var(--soft);border-radius:6px;margin-bottom:25px}.movie-empty h3{font-size:22px;margin-bottom:10px}.movie-empty p{font-size:14px;color:var(--muted);margin-bottom:22px}.movie-carousel:empty{display:none}
-.booking-dialog{width:min(590px,calc(100vw - 32px));max-height:90dvh;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);padding:36px;overflow:auto;box-shadow:0 25px 100px #0005}.booking-dialog::backdrop{background:#080808c9;backdrop-filter:blur(5px)}.booking-close{position:absolute;right:18px;top:18px}.booking-ticket{display:grid;place-items:center;width:49px;height:49px;background:#fff0f0;color:var(--red);border-radius:12px;margin-bottom:24px}.booking-dialog .eyebrow{font-size:10px}.booking-dialog h2{font-size:46px}.booking-venue{display:flex;align-items:center;gap:7px;font-size:14px;margin-top:18px}.booking-venue svg{color:var(--red)}.booking-selection{display:flex;flex-direction:column;gap:5px;background:var(--soft);border-left:3px solid var(--red);padding:13px 16px;margin-top:20px;font-size:15px}.booking-selection span{font-size:12px;color:var(--muted)}#booking-description{font-size:14px;color:var(--muted);margin:20px 0}.booking-platforms{display:grid;grid-template-columns:1fr 1fr;gap:14px}.booking-platform{border:1px solid var(--line);border-radius:8px;padding:16px;transition:border-color .2s,box-shadow .2s;background:#fff;color:var(--ink)}.booking-platform:is(:hover,:focus-visible){border-color:var(--red);box-shadow:0 4px 20px #0000000d}.platform-logo{display:flex;align-items:center;justify-content:center;height:85px;border-radius:5px;overflow:hidden;position:relative}.platform-logo img{width:160px;max-width:100%;height:auto;object-fit:contain}.district-logo{background:#6433c0}.district-logo img{position:absolute;width:430px;max-width:none;height:auto;top:-20px;left:50%;transform:translateX(-50%)}.booking-platform>span:last-child{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:650;margin-top:16px}.booking-platform>span:last-child svg{flex-shrink:0;color:var(--red)}.booking-footnote{font-size:11px;color:var(--muted);margin-top:18px;line-height:1.7}
-@media(prefers-reduced-motion:no-preference){.booking-dialog[open]{animation:cinema-dialog-enter 220ms cubic-bezier(.22,1,.36,1)}.booking-dialog[open]::backdrop{animation:cinema-backdrop-enter 200ms ease}}
-@media(max-width:650px){.booking-dialog{padding:26px 20px}.booking-dialog h2{font-size:39px}.booking-platforms{gap:10px}.booking-platform{padding:10px}.booking-platform>span:last-child{font-size:10px;gap:5px}.platform-logo{height:75px}.platform-logo img{width:135px}.district-logo img{width:370px;top:-16px}.show-times{gap:5px}.show-times button{font-size:10px;padding:6px 7px}.movie-empty{padding:25px}}
+
+
+@media(max-width:650px){.show-times{gap:5px}.show-times :is(button,a){font-size:10px;padding:6px 7px}.movie-empty{padding:25px}}
 
 /* A rounded cinema switcher with an accessible, keyboard-operated venue menu. */
 .cinema-picker{position:relative;flex-shrink:0}
@@ -297,13 +297,12 @@ html{scroll-padding-top:100px}
  .bottom-book-ring svg{width:24px;height:24px}
  .menu-toggle{display:none}
  footer{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
- .booking-dialog{max-height:calc(100dvh - 24px)}
 }
 
 /* Phone-friendly sizes: touch targets of at least 40px and inputs that don't trigger zoom on iOS. */
 @media(max-width:650px){
  .form-field :is(input:not([type=checkbox],[type=radio]),select,textarea){font-size:16px}
- .show-times{gap:8px}.show-times button{font-size:12px;padding:0 12px;min-height:40px}
+ .show-times{gap:8px}.show-times :is(button,a){font-size:12px;padding:0 12px;min-height:40px}
  .show-dates{gap:8px}.show-dates button{min-height:42px;font-size:12px}
  .movie-tabs button{min-height:46px;padding-bottom:0}
  .language-filter select{min-height:40px;font-size:12px}
@@ -326,3 +325,28 @@ html{scroll-padding-top:100px}
  .form-aside a{display:inline-block;padding:6px 0}
 }
 @media(max-width:650px){.document-book .icon-button{width:44px;height:44px}}
+
+/* Showtimes dialog: every show for a film at the selected cinema; each one opens seat selection on District. */
+.show-times :is(button,a){display:inline-flex;align-items:center;gap:6px;min-height:34px}
+.show-times small{font-size:9px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase}
+.show-times :is(button,a):is(:hover,:focus-visible) small{color:#ffd9d9}
+.showtimes-dialog{width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px);border:1px solid var(--line);border-radius:18px;background:#fff;color:var(--ink);padding:0;overflow:auto;box-shadow:0 25px 100px #0005}
+.showtimes-dialog::backdrop{background:#080808c9;backdrop-filter:blur(5px)}
+@media(prefers-reduced-motion:no-preference){.showtimes-dialog[open]{animation:cinema-dialog-enter 220ms cubic-bezier(.22,1,.36,1)}.showtimes-dialog[open]::backdrop{animation:cinema-backdrop-enter 200ms ease}}
+.showtimes-close{position:absolute;right:16px;top:16px}
+.showtimes-head{display:grid;grid-template-columns:110px minmax(0,1fr);gap:22px;padding:28px 70px 20px 28px;border-bottom:1px solid var(--line)}
+.showtimes-head img{width:110px;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#eee}
+.showtimes-head .eyebrow{margin-bottom:8px}
+.showtimes-head h2{font-size:36px;margin-bottom:8px;overflow-wrap:anywhere}
+.showtimes-meta{font-size:13px;color:var(--muted);line-height:1.6}
+.showtimes-venue{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;margin-top:10px}.showtimes-venue svg{color:var(--red)}
+.showtimes-body{padding:22px 28px 10px}
+.showtimes-day{margin-bottom:20px}.showtimes-day h3{font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.showtimes-list{display:flex;flex-wrap:wrap;gap:8px}
+.showtimes-list a{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;min-height:50px;padding:8px 12px;border:1px solid #dfb5b5;border-radius:8px;background:#fff;color:var(--red);font-size:14px;font-weight:650;line-height:1.2;text-align:center;transition:background .18s,color .18s,border-color .18s}
+.showtimes-list a small{font-size:10px;font-weight:600;color:var(--muted);margin-top:3px;letter-spacing:.2px}
+.showtimes-list a:is(:hover,:focus-visible){background:var(--red);color:#fff;border-color:var(--red)}.showtimes-list a:is(:hover,:focus-visible) small{color:#ffd9d9}
+.showtimes-foot{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 28px 24px;font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line)}
+.showtimes-foot>span{display:flex;align-items:center;gap:14px}.showtimes-foot img{height:26px;width:auto;flex-shrink:0}
+.showtimes-foot .text-link{font-size:12px;flex-shrink:0}
+@media(max-width:650px){.showtimes-head{grid-template-columns:84px minmax(0,1fr);gap:14px;padding:20px 60px 16px 18px}.showtimes-head img{width:84px}.showtimes-head h2{font-size:28px}.showtimes-body{padding:16px 18px 6px}.showtimes-foot{padding:14px 18px 20px;flex-direction:column;align-items:start}.showtimes-list a{flex:1 1 calc(33.333% - 6px);min-width:0}.showtimes-close{right:12px;top:12px}}

@@ -31,7 +31,8 @@ test('reads dated pages, whose schedule District keys by cinema ID plus date', (
 
 test('captures film details, the lowest price, the screen, and the District film page', () => {
   const movie = parseDistrict(districtPage({sessions: [session(1, '2026-11-12T13:00')]}), source).movies[0];
-  assert.equal(movie.id, '176276-Hindi-3D');
+  assert.equal(movie.id, '176276');
+  assert.deepEqual([movie.languages, movie.formats], [['Hindi'], ['3D']]);
   assert.equal(movie.poster, 'https://b.zmtcdn.com/data/edition_assets/ramayana.jpg');
   assert.deepEqual([movie.contentId, movie.censor, movie.duration, movie.releaseDate], ['176276', 'U', 195, '2026-11-05']);
   assert.deepEqual(movie.genres, ['Action', 'Drama']);
@@ -64,7 +65,7 @@ test('fetches every date District has opened, and keeps the last good shows for 
     // A stale answer: the 12th's page for the 14th.
     '2026-11-14': districtPage({date: '2026-11-12', sessions: [session(1, '2026-11-12T13:00')]}),
   };
-  const previous = {venues: {[source.id]: {movies: [{id: '176276-Hindi-3D', title: 'Ramayana', language: 'Hindi', format: '3D', poster: '', sessions: [
+  const previous = {venues: {[source.id]: {movies: [{id: '176276', title: 'Ramayana', languages: ['Hindi'], formats: ['3D'], poster: '', sessions: [
     {id: 'old-14', startsAt: '2026-11-14T13:00:00.000Z', date: '2026-11-14', time: '6:30 pm', screen: 'SCREEN 1', districtUrl: source.url},
     {id: 'old-13', startsAt: '2026-11-13T09:00:00.000Z', date: '2026-11-13', time: '2:30 pm', screen: 'SCREEN 1', districtUrl: source.url},
   ]}]}}};

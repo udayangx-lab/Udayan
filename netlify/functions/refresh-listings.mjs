@@ -1,4 +1,4 @@
-// Netlify Scheduled Function: refreshes District showtimes every 30 minutes by calling the
+// Netlify Scheduled Function: refreshes District showtimes every 15 minutes by calling the
 // site's protected cron route. Scheduled functions run only on published production deploys.
 export default async () => {
   const base = process.env.URL;
@@ -11,4 +11,4 @@ export default async () => {
   console.log('[listings]', response.status, await response.text());
 };
 
-export const config = {schedule: '*/30 * * * *'};
+export const config = {schedule: '*/15 * * * *'};

@@ -1,7 +1,8 @@
 // `seat`: districtUrl opens District's seat selection for this exact show (otherwise the cinema's page for that date).
-export type Show = {id: string; startsAt: string; date: string; time: string; screen: string; label?: string; price?: number; seat?: boolean; districtUrl: string};
+export type Show = {id: string; startsAt: string; date: string; time: string; language: string; format: string; screen: string; label?: string; price?: number; seat?: boolean; districtUrl: string};
+/** One film at one cinema. Its shows may be in several formats (2D, 3D) and languages. */
 export type LiveMovie = {
-  id: string; title: string; language: string; format: string; poster: string; sessions: Show[];
+  id: string; title: string; languages: string[]; formats: string[]; poster: string; sessions: Show[];
   contentId?: string; censor?: string; duration?: number; genres?: string[]; releaseDate?: string; filmUrl?: string;
 };
 export type VenueListings = {

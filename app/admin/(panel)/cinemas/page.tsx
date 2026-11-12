@@ -25,8 +25,7 @@ export default async function Cinemas({searchParams}: {searchParams: Promise<Rec
       <label className="span">Address<textarea name="address" defaultValue={cinema.address} rows={2} required maxLength={300}/></label>
       <label className="span">Parking<input name="parking" defaultValue={cinema.parking} maxLength={80}/></label>
       <label className="span">Google Maps link<input type="url" name="maps" defaultValue={cinema.maps} required/></label>
-      <label className="span">BookMyShow link<input type="url" name="booking" defaultValue={cinema.booking} required/><small>The venue page. The selected date is appended automatically.</small></label>
-      <label className="span">District link<input type="url" name="district" defaultValue={cinema.district} required/><small>Changing this does not change where live showtimes are read from.</small></label>
+      <label className="span">District link<input type="url" name="district" defaultValue={cinema.district} required/><small>Where Book tickets leads. Changing this does not change where live showtimes are read from.</small></label>
       <label>Latitude<input name="latitude" defaultValue={cinema.coordinates.latitude} required inputMode="decimal"/></label>
       <label>Longitude<input name="longitude" defaultValue={cinema.coordinates.longitude} required inputMode="decimal"/></label>
       <div className="admin-actions span"><SubmitButton>Save {cinema.name}</SubmitButton></div>

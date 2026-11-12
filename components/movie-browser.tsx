@@ -4,32 +4,34 @@ import {useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent}
 import {ArrowUpRight, ChevronLeft, ChevronRight, MapPin} from 'lucide-react';
 import {useSiteContent} from './site-content';
 import {useCinema} from './site-shell';
-import {useBooking} from './booking-chooser';
 import {useLiveListings} from './live-listings';
+import DistrictLink from './district-link';
+import ShowtimesDialog from './showtimes-dialog';
 import {dayLabel, indiaDate, runtime, titleKey, type ComingSoon, type LiveMovie, type Show} from '@/lib/listings';
 
-type Card = {id: string; title: string; poster: string; language?: string; format?: string; censor?: string; duration?: number; sessions: Show[];
-  badge: string; note?: string; releaseDate?: string; url?: string; advance?: boolean};
+type Card = {id: string; title: string; poster: string; language?: string; censor?: string; duration?: number; sessions: Show[];
+  badge: string; note?: string; releaseDate?: string; url?: string; advance?: boolean; movie?: LiveMovie};
 const stamp = (movie: Pick<LiveMovie, 'censor' | 'duration'>) => [movie.censor, runtime(movie.duration)].filter(Boolean).join(' · ');
 
 export function MovieBrowser({compact = false}: {compact?: boolean}) {
   const {cinemas, upcoming: curated} = useSiteContent();
   const [tab, setTab] = useState('showing');
   const [language, setLanguage] = useState('All languages');
+  const [selected, setSelected] = useState<LiveMovie | null>(null);
   const {index} = useCinema();
-  const openBooking = useBooking();
+  const cinema = cinemas[index];
   const {data: feed, unavailable, now} = useLiveListings();
   const [chosenDate, setChosenDate] = useState('');
-  const venue = feed?.venues[cinemas[index].id];
+  const venue = feed?.venues[cinema.id];
   const age = venue?.lastSuccessAt ? now - Date.parse(venue.lastSuccessAt) : Infinity;
   const cachedMovies = age < 24 * 60 * 60 * 1000 ? venue?.movies || [] : [];
   const availableDates = [...new Set(cachedMovies.flatMap(movie => movie.sessions.filter(show => Date.parse(show.startsAt) > now).map(show => show.date)))].sort();
   const date = availableDates.includes(chosenDate) ? chosenDate : availableDates[0] || '';
   const currentMovies = cachedMovies.map(movie => ({...movie, sessions: movie.sessions.filter(show => show.date === date && Date.parse(show.startsAt) > now)})).filter(movie => movie.sessions.length);
-  const languages = [...new Set(currentMovies.map(movie => movie.language))].sort();
+  const languages = [...new Set(currentMovies.flatMap(movie => movie.sessions.map(show => show.language)))].sort();
   const activeLanguage = languages.includes(language) ? language : 'All languages';
-  const stale = Boolean(unavailable || venue?.error || age > 75 * 60 * 1000);
-  useEffect(() => { setChosenDate(''); setLanguage('All languages'); }, [index]);
+  const stale = Boolean(unavailable || venue?.error || age > 45 * 60 * 1000);
+  useEffect(() => { setChosenDate(''); setLanguage('All languages'); setSelected(null); }, [index]);
   const track = useRef<HTMLDivElement>(null);
   const trackId = useId();
   const [position, setPosition] = useState({first: 1, last: 4, previous: false, next: true});
@@ -41,13 +43,17 @@ export function MovieBrowser({compact = false}: {compact?: boolean}) {
   // bookable here. A title with advance booking open at the other Udayan cinema says so.
   const bookable = (movies: LiveMovie[]) => new Set(movies.filter(movie => movie.sessions.some(show => Date.parse(show.startsAt) > now)).flatMap(movie => [titleKey(movie.title), movie.contentId ? 'id:' + movie.contentId : '']).filter(Boolean));
   const here = bookable(cachedMovies);
-  const elsewhere = cinemas.filter((_, i) => i !== index).map(cinema => ({cinema, keys: bookable(feed?.venues[cinema.id]?.movies || [])}));
+  const elsewhere = cinemas.filter((_, i) => i !== index).map(other => ({cinema: other, keys: bookable(feed?.venues[other.id]?.movies || [])}));
   const upcoming: ComingSoon[] = (feed?.upcoming ?? curated.map(movie => ({...movie, source: 'curated' as const}))).filter(movie => !here.has(titleKey(movie.title)) && !here.has('id:' + movie.id));
   const data: Card[] = tab === 'showing'
-    ? currentMovies.filter(movie => activeLanguage === 'All languages' || movie.language === activeLanguage).map(movie => {
-      const advance = Boolean(movie.releaseDate && movie.releaseDate > today);
-      return {...movie, advance, badge: advance ? 'ADVANCE BOOKING' : movie.format || 'IN CINEMAS', note: stamp(movie)};
-    })
+    ? currentMovies.map(movie => ({...movie, sessions: activeLanguage === 'All languages' ? movie.sessions : movie.sessions.filter(show => show.language === activeLanguage)}))
+      .filter(movie => movie.sessions.length)
+      .map(movie => {
+        const advance = Boolean(movie.releaseDate && movie.releaseDate > today);
+        const full = cachedMovies.find(item => item.id === movie.id) || movie;
+        return {id: movie.id, title: movie.title, poster: movie.poster, language: movie.languages.join(', '), censor: movie.censor, duration: movie.duration, sessions: movie.sessions,
+          advance, badge: advance ? 'ADVANCE BOOKING' : movie.formats.join(' / ') || 'IN CINEMAS', note: stamp(movie), movie: full};
+      })
     : upcoming.map(movie => {
       const open = elsewhere.find(({keys}) => keys.has(titleKey(movie.title)) || keys.has('id:' + movie.id));
       return {id: movie.id, title: movie.title, poster: movie.poster || '/images/udayancinema-logo.png', language: movie.language, censor: movie.censor, duration: movie.duration, sessions: [],
@@ -97,6 +103,8 @@ export function MovieBrowser({compact = false}: {compact?: boolean}) {
       element?.scrollTo({left: event.key === 'Home' ? 0 : element.scrollWidth, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
     }
   }
+  // "3D" or "Bengali" beside a time when the film has more than one format or language on this date.
+  const showLabel = (movie: Card, show: Show) => [movie.movie && movie.movie.formats.length > 1 ? show.format : '', movie.movie && movie.movie.languages.length > 1 ? show.language : ''].filter(Boolean).join(' ');
 
   return <>
     <div className="movie-toolbar">
@@ -109,10 +117,10 @@ export function MovieBrowser({compact = false}: {compact?: boolean}) {
     {tab === 'showing' && <div className="show-schedule">
       <div className="show-dates" role="group" aria-label="Show dates">{availableDates.map(value => <button key={value} className={date === value ? 'selected' : ''} aria-pressed={date === value} onClick={() => setChosenDate(value)}>{dayLabel(value, now)}</button>)}</div>
       <p className={stale ? 'sync-status stale' : 'sync-status'}>{venue?.lastSuccessAt ? `${stale ? 'Last saved listings' : 'Updated from District'} · ${new Intl.DateTimeFormat('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}).format(new Date(venue.lastSuccessAt))} IST` : unavailable ? 'Listings temporarily unavailable' : 'Fetching the latest shows…'}</p>
-      {stale && venue?.lastSuccessAt && <p className="sync-warning">Updates are delayed. Confirm show availability on your booking platform.</p>}
+      {stale && venue?.lastSuccessAt && <p className="sync-warning">Updates are delayed. Confirm show availability on District.</p>}
     </div>}
     {tab === 'upcoming' && data.length === 0 && <div className="movie-empty"><h3>New releases are on their way.</h3><p>{feed ? 'There are no announced releases to show right now. Check back soon.' : 'Loading upcoming releases…'}</p></div>}
-    {tab === 'showing' && data.length === 0 && <div className="movie-empty"><h3>{!feed && !unavailable ? 'Finding your next movie…' : 'Check the latest shows.'}</h3><p>{!feed && !unavailable ? 'Loading listings for your selected Udayan Cinema.' : 'No upcoming shows are available here right now. Check District or BookMyShow for the latest bookings.'}</p><button className="button red" onClick={() => openBooking()}>Choose booking platform<ArrowUpRight size={18}/></button></div>}
+    {tab === 'showing' && data.length === 0 && <div className="movie-empty"><h3>{!feed && !unavailable ? 'Finding your next movie…' : 'Check the latest shows.'}</h3><p>{!feed && !unavailable ? 'Loading listings for your selected Udayan Cinema.' : 'No upcoming shows are listed here right now. Check District for the latest bookings.'}</p><DistrictLink className="button red" href={cinema.district}>Udayan {cinema.name} on District<ArrowUpRight size={18}/></DistrictLink></div>}
     {compact && data.length > 0 && <div className="movie-carousel-controls">
       <span className="carousel-count" role="status" aria-live="polite" aria-atomic="true">{position.first}–{Math.min(position.last, data.length)} of {data.length} movies</span>
       <div className="carousel-navigation"><span className="carousel-hint">Swipe or use the arrows</span>
@@ -121,18 +129,27 @@ export function MovieBrowser({compact = false}: {compact?: boolean}) {
       </div>
     </div>}
     <div ref={track} id={trackId} className={compact ? 'movie-grid movie-carousel' : 'movie-grid'} role={compact ? 'region' : undefined} aria-roledescription={compact ? 'carousel' : undefined} aria-label={compact ? `${tab === 'showing' ? 'Now showing' : 'Coming soon'} movies` : undefined} tabIndex={compact ? 0 : undefined} onKeyDown={compact ? onKeyDown : undefined}>
-      {data.map((movie, i) => <article className="movie-card" key={movie.id}>
-        <button type="button" className="poster-link" onClick={() => openBooking(tab === 'showing' ? {movie: movie.title, language: movie.language, date} : {movie: movie.title, language: movie.language, upcoming: true, releaseDate: movie.releaseDate, districtUrl: movie.url})} aria-label={`${tab === 'showing' ? 'Choose booking platform for' : 'Booking options for upcoming'} ${movie.title}${movie.language ? ' in ' + movie.language : ''} at ${cinemas[index].name}`}>
+      {data.map((movie, i) => {
+        const poster = <>
           <img src={movie.poster} alt={movie.title + ' movie poster'} loading="lazy" onError={event => { event.currentTarget.onerror = null; if (!event.currentTarget.src.endsWith('/images/udayancinema-logo.png')) event.currentTarget.src = '/images/udayancinema-logo.png'; }}/>
           <span className={movie.advance ? 'poster-badge advance' : 'poster-badge'}>{movie.badge}</span>
-          <span className="poster-action">{tab === 'showing' ? 'Book tickets' : movie.url ? 'View details' : 'Check availability'}<ArrowUpRight size={19}/></span>
-        </button>
-        <div className="movie-meta"><span>{[movie.language || 'Upcoming release', movie.advance ? movie.format : ''].filter(Boolean).join(' · ')}</span><span>{String(i + 1).padStart(2, '0')}</span></div><h3>{movie.title}</h3>
-        {movie.note && <p className="movie-note">{movie.note}</p>}
-        {tab === 'showing' && <div className="show-times" aria-label={`${movie.title} showtimes`}>{movie.sessions.map(show => <button key={show.id} title={[show.label || show.screen, show.price ? `from ₹${show.price}` : ''].filter(Boolean).join(' · ')} aria-label={`Book ${movie.title} at ${show.time}, ${dayLabel(show.date, now)}${show.screen ? ', ' + show.screen : ''}`}
-          onClick={() => openBooking({movie: movie.title, language: [movie.language, movie.format].filter(Boolean).join(' '), date: show.date, time: show.time, screen: show.screen, price: show.price, startsAt: show.startsAt, districtUrl: show.districtUrl, seat: show.seat})}>{show.time}</button>)}</div>}
-      </article>)}
+          <span className="poster-action">{tab === 'showing' ? 'See all showtimes' : movie.url ? 'View on District' : 'Check availability'}<ArrowUpRight size={19}/></span>
+        </>;
+        return <article className="movie-card" key={movie.id}>
+          {tab === 'showing'
+            ? <button type="button" className="poster-link" onClick={() => setSelected(movie.movie || null)} aria-label={`All showtimes for ${movie.title} at Udayan ${cinema.name}`}>{poster}</button>
+            : <DistrictLink className="poster-link" href={movie.url || cinema.district} aria-label={`${movie.title}${movie.url ? ' on District' : ': check availability on District'}`}>{poster}</DistrictLink>}
+          <div className="movie-meta"><span>{[movie.language || 'Upcoming release', movie.advance && movie.movie ? movie.movie.formats.join(' / ') : ''].filter(Boolean).join(' · ')}</span><span>{String(i + 1).padStart(2, '0')}</span></div><h3>{movie.title}</h3>
+          {movie.note && <p className="movie-note">{movie.note}</p>}
+          {tab === 'showing' && <div className="show-times" aria-label={`${movie.title} showtimes, ${dayLabel(date, now)}`}>{movie.sessions.map(show =>
+            <DistrictLink key={show.id} href={show.districtUrl} startsAt={show.seat ? show.startsAt : undefined} title={[show.label || show.screen, show.price ? `from ₹${show.price}` : ''].filter(Boolean).join(' · ')}
+              aria-label={`${show.time}, ${dayLabel(show.date, now)}${showLabel(movie, show) ? ', ' + showLabel(movie, show) : ''}${show.screen ? ', ' + show.screen : ''}: choose seats on District`}>
+              {show.time}{showLabel(movie, show) && <small>{showLabel(movie, show)}</small>}
+            </DistrictLink>)}</div>}
+        </article>;
+      })}
     </div>
-    <div className="listings-note"><span><MapPin size={14}/>{tab === 'showing' ? `Booking at Udayan ${cinemas[index].name}` : `Coming to Udayan ${cinemas[index].name}`}</span><span>{tab === 'showing' ? 'Shows refresh from District every 30 minutes. Confirm prices and seats on your booking platform.' : 'Please note that the list of upcoming movies is tentative and subject to change.'}</span></div>
+    <div className="listings-note"><span><MapPin size={14}/>{tab === 'showing' ? `Booking at Udayan ${cinema.name}` : `Coming to Udayan ${cinema.name}`}</span><span>{tab === 'showing' ? 'Shows refresh from District every 15 minutes. Tap a showtime to choose seats on District.' : 'Please note that the list of upcoming movies is tentative and subject to change.'}</span></div>
+    <ShowtimesDialog movie={selected} venueName={cinema.name} venueUrl={cinema.district} now={now || Date.now()} onClose={() => setSelected(null)}/>
   </>;
 }

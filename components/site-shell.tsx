@@ -4,20 +4,23 @@ import {usePathname} from 'next/navigation';
 import {useEffect, useState, createContext, useContext} from 'react';
 import {ArrowUpRight, Ticket, Menu, X, Phone, Mail, Home, Clapperboard, MapPin} from 'lucide-react';
 import {MotionProvider} from '@/components/site-motion';
-import {BookingProvider, useBooking, type BookingSelection} from './booking-chooser';
+import DistrictLink from './district-link';
 import {LiveListingsProvider} from './live-listings';
 import {CinemaPicker} from './cinema-picker';
 import {useCinemaLocation} from './use-cinema-location';
-import {SiteContentProvider} from './site-content';
+import {SiteContentProvider, useSiteContent} from './site-content';
 import {nav, moreNav, type PublicContent} from '@/lib/data';
 import HeaderMore from './header-more';
 
 const CinemaContext = createContext({index: 0, setIndex: (_value: number) => {}});
 export const useCinema = () => useContext(CinemaContext);
 
-export function BookingLink({children = 'Book tickets', className = 'button red', 'aria-label': label, ...selection}: BookingSelection & {children?: React.ReactNode; className?: string; 'aria-label'?: string}) {
-  const openBooking = useBooking();
-  return <button type="button" className={className} aria-label={label} onClick={() => openBooking(selection)}>{children}<ArrowUpRight size={17}/></button>;
+/** Opens the selected cinema (or the given one) on District, where tickets are booked. */
+export function BookingLink({children = 'Book tickets', className = 'button red', 'aria-label': label, cinemaIndex}: {children?: React.ReactNode; className?: string; 'aria-label'?: string; cinemaIndex?: number}) {
+  const {cinemas} = useSiteContent();
+  const {index} = useCinema();
+  const venue = cinemas[cinemaIndex ?? index] || cinemas[0];
+  return <DistrictLink className={className} aria-label={label} href={venue.district}>{children}<ArrowUpRight size={17}/></DistrictLink>;
 }
 
 /** Whether the page has scrolled far enough for the header to float. A small hysteresis stops it flickering at the edge. */
@@ -35,13 +38,12 @@ function useFloatingHeader() {
 }
 
 /** App-style navigation along the bottom of phone screens (shown by CSS at 650px and below). */
-function BottomNav({pathname, menuOpen, onMenu}: {pathname: string; menuOpen: boolean; onMenu: () => void}) {
-  const openBooking = useBooking();
+function BottomNav({pathname, bookUrl, menuOpen, onMenu}: {pathname: string; bookUrl: string; menuOpen: boolean; onMenu: () => void}) {
   const current = (href: string) => pathname === href ? 'page' : undefined;
   return <nav className="bottom-nav" aria-label="Quick navigation">
     <Link href="/" aria-current={current('/')}><Home aria-hidden="true"/>Home</Link>
     <Link href="/movies" aria-current={current('/movies')}><Clapperboard aria-hidden="true"/>Movies</Link>
-    <button type="button" className="bottom-book" onClick={() => openBooking()} aria-label="Book tickets"><span className="bottom-book-ring"><Ticket aria-hidden="true"/></span>Book</button>
+    <DistrictLink className="bottom-book" href={bookUrl} aria-label="Book tickets on District"><span className="bottom-book-ring"><Ticket aria-hidden="true"/></span>Book</DistrictLink>
     <Link href="/contact" aria-current={current('/contact')}><MapPin aria-hidden="true"/>Visit</Link>
     <button type="button" aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={onMenu}>{menuOpen ? <X aria-hidden="true"/> : <Menu aria-hidden="true"/>}Menu</button>
   </nav>;
@@ -63,7 +65,7 @@ export default function SiteShell({content, children}: {content: PublicContent; 
     document.addEventListener('keydown', key);
     return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', key); };
   }, [open]);
-  return <SiteContentProvider content={content}><CinemaContext.Provider value={{index, setIndex}}><LiveListingsProvider><BookingProvider cinemaIndex={index}><MotionProvider>
+  return <SiteContentProvider content={content}><CinemaContext.Provider value={{index, setIndex}}><LiveListingsProvider><MotionProvider>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="topbar"><div className="container"><span>{content.announcement}</span><span>{cinemas.map((c, i) => <span key={c.id}>{i > 0 && <i/>}{c.name}</span>)}</span></div></div>
     <header className="header" data-floating={floating}>
@@ -101,6 +103,6 @@ export default function SiteShell({content, children}: {content: PublicContent; 
         </nav>
       </div>
     </div>
-    <BottomNav pathname={pathname} menuOpen={open} onMenu={() => setOpen(!open)}/>
-  </MotionProvider></BookingProvider></LiveListingsProvider></CinemaContext.Provider></SiteContentProvider>;
+    <BottomNav pathname={pathname} bookUrl={(cinemas[index] || cinemas[0]).district} menuOpen={open} onMenu={() => setOpen(!open)}/>
+  </MotionProvider></LiveListingsProvider></CinemaContext.Provider></SiteContentProvider>;
 }

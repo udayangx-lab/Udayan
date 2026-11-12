@@ -3,7 +3,7 @@ import {describeRefresh, readSyncSettings, recordRun, refreshListings} from '@/l
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// Called every 30 minutes by the Netlify scheduled function (netlify/functions/refresh-listings.mjs) or Vercel Cron
+// Called every 15 minutes by the Netlify scheduled function (netlify/functions/refresh-listings.mjs) or Vercel Cron
 // (vercel.json), with `Authorization: Bearer $CRON_SECRET`.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;

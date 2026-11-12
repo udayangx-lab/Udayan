@@ -13,11 +13,13 @@ test('converts actual District UTC-shaped times to IST without local-machine tim
   assert.equal(movie.sessions[0].startsAt, '2026-09-24T06:15:00.000Z');
   assert.equal(movie.sessions[0].districtUrl, sources[0].url + '?fromdate=2026-09-24');
 });
-test('IST midnight rollover and language/format variants stay distinct', () => {
+test('IST midnight rollover; language and format variants stay on one film, tagged per show', () => {
   const sessions = ['Hindi', 'Bengali'].map((lang,i) => ({cid: 1102426, sid: String(i), showTime: '2026-09-24T20:15', lang, scrnFmt: i ? '3D' : '2D'}));
   const result = parseDistrict(page(sources[0], sessions), sources[0]);
-  assert.equal(result.movies.length, 2);
-  assert.equal(result.movies[1].format, '3D');
+  assert.equal(result.movies.length, 1);
+  assert.deepEqual(result.movies[0].languages, ['Hindi', 'Bengali']);
+  assert.deepEqual(result.movies[0].formats, ['2D', '3D']);
+  assert.deepEqual(result.movies[0].sessions.map(show => [show.language, show.format]), [['Hindi', '2D'], ['Bengali', '3D']]);
   assert.equal(result.movies[0].sessions[0].date, '2026-09-25');
   assert.match(result.movies[0].sessions[0].time, /1:45/);
 });
@@ -41,7 +43,7 @@ test('a failed refresh preserves prior successful listings and records failure i
   assert.match(result.venues.sheoraphuli.error, /503/);
   assert.equal(result.venues.tarakeswar.error, null);
   assert.deepEqual(result.venues.tarakeswar.movies, []);
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
 });
 test('a dated page without show data is retried, then reported without failing the venue', async () => {
   const {indiaDate} = await import('../scripts/lib/listings.mjs');

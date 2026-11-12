@@ -19,22 +19,24 @@ export default async function NowShowing({searchParams}: {searchParams: Promise<
   const cinemas = (await readContent()).cinemas;
   const now = Date.now();
   // One row per movie variant (title + language + format), across both cinemas.
-  const movies = new Map<string, {id: string; title: string; language: string; format: string; poster: string; venues: string[]; shows: number}>();
+  const movies = new Map<string, {id: string; title: string; languages: string[]; formats: string[]; poster: string; venues: string[]; shows: number}>();
   for (const cinema of cinemas) for (const movie of feed?.venues[cinema.id]?.movies || []) {
     const upcoming = movie.sessions.filter(show => Date.parse(show.startsAt) > now).length;
-    const entry = movies.get(movie.id) || {id: movie.id, title: movie.title, language: movie.language, format: movie.format, poster: movie.poster, venues: [], shows: 0};
+    const entry = movies.get(movie.id) || {id: movie.id, title: movie.title, languages: [], formats: [], poster: movie.poster, venues: [], shows: 0};
+    for (const language of movie.languages) if (!entry.languages.includes(language)) entry.languages.push(language);
+    for (const format of movie.formats) if (!entry.formats.includes(format)) entry.formats.push(format);
     entry.venues.push(cinema.name);
     entry.shows += upcoming;
     movies.set(movie.id, entry);
   }
   return <>
     <header className="admin-header"><div><span className="admin-eyebrow">WEBSITE</span><h1>Now showing</h1>
-      <p className="admin-subtitle">Movies and showtimes for every date District has opened are read every 30 minutes. Each showtime opens seat selection for that show on District. Hide a listing or correct its title or poster here; corrections stay in place across refreshes.</p></div>
+      <p className="admin-subtitle">Movies and showtimes for every date District has opened are read every 15 minutes. Each showtime opens seat selection for that show on District. Hide a listing or correct its title or poster here; corrections stay in place across refreshes.</p></div>
       <form action={refreshNowShowing}><SubmitButton pending="Refreshing from District…"><RefreshCw size={15}/>Refresh now</SubmitButton></form></header>
     <Notice searchParams={searchParams}/>
     <section className="admin-panel admin-sync-control">
       <form action={setAutomaticSync} className="admin-sync-switch">
-        <label className="admin-check"><input type="checkbox" name="automatic" defaultChecked={sync.automatic}/>Fetch from District automatically every 30 minutes</label>
+        <label className="admin-check"><input type="checkbox" name="automatic" defaultChecked={sync.automatic}/>Fetch from District automatically every 15 minutes</label>
         <SubmitButton className="admin-button small">Save</SubmitButton>
       </form>
       <p className="admin-footnote">{sync.automatic ? 'On: the schedule and visitors keep showtimes and Coming soon current.' : 'Off: nothing is fetched until you press Refresh now. Visitors see the last saved listings with a “delayed” notice.'}</p>
@@ -46,7 +48,7 @@ export default async function NowShowing({searchParams}: {searchParams: Promise<
     <section className="admin-sync">{cinemas.map(cinema => {
       const venue = feed?.venues[cinema.id];
       const age = venue?.lastSuccessAt ? now - Date.parse(venue.lastSuccessAt) : Infinity;
-      const healthy = venue && !venue.error && age < 75 * 60 * 1000;
+      const healthy = venue && !venue.error && age < 45 * 60 * 1000;
       return <div key={cinema.id} className={`admin-callout${healthy ? '' : ' warning'}`}>{healthy ? <CircleCheck size={20}/> : <CircleAlert size={20}/>}<div>
         <strong>{cinema.name}: {venue ? `${venue.movies.length} listings` : 'no data yet'}</strong>
         <p>{venue?.lastSuccessAt ? `Last successful update ${formatDate(venue.lastSuccessAt)} IST.` : 'Never updated successfully.'}
@@ -64,7 +66,7 @@ export default async function NowShowing({searchParams}: {searchParams: Promise<
           <label className="admin-poster"><img src={poster} alt=""/><input type="file" name="posterFile" accept="image/jpeg,image/png,image/webp" aria-label={`Replace poster for ${movie.title}`}/></label>
           <div className="admin-movie-fields">
             <label>Title<input name="title" defaultValue={overrides.titles[movie.id] || movie.title} maxLength={120}/></label>
-            <small>{[movie.language, movie.format].filter(Boolean).join(' · ')} · {movie.venues.join(' & ')} · {movie.shows} upcoming shows{overrides.titles[movie.id] ? ` · District title: ${movie.title}` : ''}</small>
+            <small>{[movie.languages.join(', '), movie.formats.join(' / ')].filter(Boolean).join(' · ')} · {movie.venues.join(' & ')} · {movie.shows} upcoming shows{overrides.titles[movie.id] ? ` · District title: ${movie.title}` : ''}</small>
             <div className="admin-movie-options">
               <label className="admin-check"><input type="checkbox" name="hidden" defaultChecked={hidden}/>Hide from the website</label>
               {overrides.posters[movie.id] && <label className="admin-check"><input type="checkbox" name="resetPoster"/>Use District’s poster</label>}

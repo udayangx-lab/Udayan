@@ -62,12 +62,13 @@ export function parseDistrict(html, source) {
       const title = text(group.entityName) || text(film.name) || text(film.label);
       if (!title || !language || group.entityCode == null || session.sid == null) throw new Error('Incomplete movie or show identity');
       const contentId = String(session.contentId ?? film.contentId ?? group.entityCode);
-      const id = `${group.entityCode}-${language}-${format}`;
+      // One movie per film: District lists a film once with 2D and 3D (or dubbed) shows underneath it.
+      const id = String(group.entityCode);
       let movie = movies.find(item => item.id === id);
       if (!movie) {
         const poster = text(film.appImgPath) || text(posters.get(contentId));
         const genres = (Array.isArray(film.genre) ? film.genre : Array.isArray(film.grn) ? film.grn : []).filter(item => typeof item === 'string');
-        movie = {id, title, language, format, poster: posterHosts.test(poster) ? poster : fallbackPoster, contentId,
+        movie = {id, title, languages: [], formats: [], poster: posterHosts.test(poster) ? poster : fallbackPoster, contentId,
           censor: text(film.censor), duration: Number.isFinite(film.duration) && film.duration > 0 ? film.duration : undefined, genres,
           releaseDate: isDate(film.releaseDate) ? film.releaseDate : undefined, filmUrl: filmUrl(group.entityUrl) || undefined, sessions: []};
         movies.push(movie);
@@ -79,7 +80,9 @@ export function parseDistrict(html, source) {
       const encSession = String(session.encSessionId || '');
       const seat = safe(code) && safe(encSession) && encSession.startsWith(source.districtId + '-') && /^\d+$/.test(contentId);
       const prices = (Array.isArray(session.areas) ? session.areas : []).map(area => area?.price).filter(price => typeof price === 'number' && price > 0);
-      const show = {id: `${source.districtId}-${session.sid}`, startsAt: startsAt.toISOString(), date, time: indiaTime(startsAt),
+      if (!movie.languages.includes(language)) movie.languages.push(language);
+      if (format && !movie.formats.includes(format)) movie.formats.push(format);
+      const show = {id: `${source.districtId}-${session.sid}`, startsAt: startsAt.toISOString(), date, time: indiaTime(startsAt), language, format,
         screen: text(session.audi) || text(session.premiumLabel), label: text(session.premiumLabel) || undefined,
         price: prices.length ? Math.min(...prices) : undefined, seat,
         districtUrl: seat ? `https://www.district.in/movies/seat-layout/${code}?encsessionid=${encSession}&freeseating=false&fromsessions=true&type=CINEMAS&contentid=${contentId}` : `${source.url}?fromdate=${date}`};
@@ -95,7 +98,11 @@ export function mergeMovies(pages) {
   for (const page of pages) for (const movie of page.movies) {
     if (!merged.has(movie.id)) merged.set(movie.id, {...movie, sessions: []});
     const target = merged.get(movie.id);
-    for (const [key, value] of Object.entries(movie)) if (key !== 'sessions' && (target[key] == null || target[key] === '' || (key === 'poster' && target.poster === fallbackPoster))) target[key] = value;
+    for (const [key, value] of Object.entries(movie)) {
+      if (key === 'sessions') continue;
+      if (Array.isArray(value) && Array.isArray(target[key])) { for (const item of value) if (!target[key].includes(item)) target[key].push(item); }
+      else if (target[key] == null || target[key] === '' || (key === 'poster' && target.poster === fallbackPoster)) target[key] = value;
+    }
     for (const show of movie.sessions) if (!target.sessions.some(item => item.id === show.id)) target.sessions.push(show);
   }
   return [...merged.values()].map(movie => ({...movie, sessions: movie.sessions.sort((a, b) => a.startsAt.localeCompare(b.startsAt))}));
@@ -146,7 +153,7 @@ export async function collectListings({previous = {venues: {}}, fetchImpl = fetc
       const failedDates = later.filter((_, index) => !answers[index]);
       const pages = [first, ...answers.filter(Boolean)];
       // A flaky date keeps the last correct shows for that date instead of disappearing.
-      if (failedDates.length && prior?.movies) pages.push({movies: prior.movies.map(movie => ({...movie, sessions: movie.sessions.filter(show => failedDates.includes(show.date))}))});
+      if (failedDates.length && prior?.movies) pages.push({movies: prior.movies.filter(movie => Array.isArray(movie.languages)).map(movie => ({...movie, sessions: movie.sessions.filter(show => failedDates.includes(show.date))}))});
       const movies = mergeMovies(pages).map(movie => ({...movie, sessions: movie.sessions.filter(show => Date.parse(show.startsAt) > now)})).filter(movie => movie.sessions.length);
       venues[source.id] = {source: 'District', sourceUrl: source.url, lastSuccessAt: new Date().toISOString(), lastAttemptAt: attemptedAt, error: null, dates, failedDates, movies};
       log.log(`[listings] ${source.id}: ${movies.length} movie variants, ${movies.reduce((sum, movie) => sum + movie.sessions.length, 0)} shows across ${dates.length} dates${failedDates.length ? ` (failed: ${failedDates.join(', ')})` : ''}`);
@@ -155,7 +162,8 @@ export async function collectListings({previous = {venues: {}}, fetchImpl = fetc
       venues[source.id] = {...prior, source: 'District', sourceUrl: source.url, lastAttemptAt: attemptedAt, error: String(error.message), movies: prior?.movies || []};
     }
   }));
-  return {version: 1, refreshIntervalMinutes: 30, lastAttemptAt: attemptedAt, venues};
+  // Version 2: one movie per film, shows tagged with language and format. Older stored feeds are refetched, not served.
+  return {version: 2, refreshIntervalMinutes: 15, lastAttemptAt: attemptedAt, venues};
 }
 
 // District picks the upcoming list's city from a `location` cookie and otherwise assumes Delhi NCR, whose list differs.

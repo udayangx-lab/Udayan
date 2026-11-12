@@ -106,13 +106,13 @@ export async function saveCinema(formData: FormData) {
   const phone = normalizePhone(field(formData, 'phone', 20));
   const latitude = Number(field(formData, 'latitude', 20));
   const longitude = Number(field(formData, 'longitude', 20));
-  const links = {maps: field(formData, 'maps', 500), booking: field(formData, 'booking', 500), district: field(formData, 'district', 500)};
+  const links = {maps: field(formData, 'maps', 500), district: field(formData, 'district', 500)};
   if (!name) fail('The name is required.');
   if (!phone) fail('Enter a valid 10-digit mobile number.');
   if (!field(formData, 'address', 300)) fail('The address is required.');
   if (!/^\d{4}$/.test(field(formData, 'since', 4))) fail('“Since” must be a four-digit year.');
   if (!Number.isFinite(latitude) || Math.abs(latitude) > 90 || !Number.isFinite(longitude) || Math.abs(longitude) > 180) fail('Enter valid map coordinates.');
-  for (const [key, value] of Object.entries(links)) if (!isWebUrl(value)) fail(`The ${key === 'maps' ? 'Google Maps' : key === 'booking' ? 'BookMyShow' : 'District'} link must be a full web address.`);
+  for (const [key, value] of Object.entries(links)) if (!isWebUrl(value)) fail(`The ${key === 'maps' ? 'Google Maps' : 'District'} link must be a full web address.`);
   let image = current.image;
   const upload = formData.get('imageFile');
   if (isUpload(upload)) {

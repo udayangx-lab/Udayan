@@ -11,7 +11,7 @@ async function visitorRefresh() {
 }
 
 // Serves the stored showtimes (with admin corrections) and the Coming soon list. If showtimes are older than
-// 30 minutes, for example when a schedule was missed, a refresh starts after this response is sent.
+// 15 minutes, for example when a schedule was missed, a refresh starts after this response is sent.
 export async function GET() {
   let feed = await readListings();
   const {automatic} = await readSyncSettings();

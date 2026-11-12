@@ -20,7 +20,7 @@ export function LiveListingsProvider({children}: {children: ReactNode}) {
         const response = await fetch('/data/live-listings.json', {cache: 'no-store', signal: controller.signal});
         if (!response.ok) throw new Error('Listings unavailable');
         const next = await response.json();
-        if (next.version !== 1 || !next.venues || !Object.values(next.venues).every(venue => Array.isArray((venue as {movies?: unknown}).movies)) || (next.upcoming !== undefined && !Array.isArray(next.upcoming))) throw new Error('Invalid listings');
+        if (next.version !== 2 || !next.venues || !Object.values(next.venues).every(venue => Array.isArray((venue as {movies?: unknown}).movies)) || (next.upcoming !== undefined && !Array.isArray(next.upcoming))) throw new Error('Invalid listings');
         if (active) { setData(next); setUnavailable(false); }
       } catch { if (active) setUnavailable(true); }
       finally { clearTimeout(timeout); }

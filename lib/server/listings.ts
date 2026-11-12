@@ -7,9 +7,13 @@ import {indiaDate, type DistrictUpcoming, type ListingsFeed, type LiveListings} 
 export type ListingOverrides = {hidden: string[]; titles: Record<string, string>; posters: Record<string, string>};
 export type SyncSettings = {automatic: boolean; updatedAt?: string};
 export type SyncRun = {trigger: 'scheduled' | 'visitor' | 'admin'; status: 'completed' | 'skipped' | 'busy' | 'failed'; at: string; detail?: string};
-export const staleAfterMs = 30 * 60 * 1000;
+export const staleAfterMs = 15 * 60 * 1000;
 
-export async function readListings() {return await readSetting<LiveListings>('live-listings');}
+/** The stored feed, or null when it was written by an older version of the extractor (so the next request refetches). */
+export async function readListings() {
+  const feed = await readSetting<LiveListings>('live-listings');
+  return feed?.version === 2 ? feed : null;
+}
 export async function readUpcoming() {return await readSetting<DistrictUpcoming>('upcoming-district');}
 
 export async function readOverrides(): Promise<ListingOverrides> {

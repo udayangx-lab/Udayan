@@ -23,12 +23,12 @@ Open http://localhost:3000 and sign in to http://localhost:3000/admin as **admin
 3. Deploy. The tables are created on the first request, and the first showtimes request fetches District.
 4. Sign in at `/admin` as **admin**, create personal staff accounts, set email recipients, and send a test email.
 
-On Netlify, `netlify/functions/refresh-listings.mjs` is a scheduled function that calls `/api/cron/listings` every 30 minutes (published production deploys only). On Vercel, `vercel.json` does the same with Vercel Cron; add Neon under Project → Storage and the same environment variables.
+On Netlify, `netlify/functions/refresh-listings.mjs` is a scheduled function that calls `/api/cron/listings` every 15 minutes (published production deploys only). On Vercel, `vercel.json` does the same with Vercel Cron; add Neon under Project → Storage and the same environment variables.
 
 Where things live:
 
 - **Neon Postgres**: submissions, website content, settings, staff accounts, activity, rate limits, the showtimes feed, and uploaded files (CVs are private; photos are public under `/media/…` with permanent cache headers, so Vercel's CDN serves repeat requests).
-- **Showtimes**: a Netlify scheduled function (or Vercel Cron) calls `/api/cron/listings` every 30 minutes, protected by `CRON_SECRET`. The site also refreshes itself whenever a visitor loads showtimes older than 30 minutes, so listings stay current even if a schedule is missed. A lease row prevents overlapping refreshes.
+- **Showtimes**: a Netlify scheduled function (or Vercel Cron) calls `/api/cron/listings` every 15 minutes, protected by `CRON_SECRET`. The site also refreshes itself whenever a visitor loads showtimes older than 15 minutes, so listings stay current even if a schedule is missed. A lease row prevents overlapping refreshes.
 - **Limits**: serverless functions accept request bodies of a few MB (4.5 MB on Vercel, 6 MB on Netlify), so CVs are limited to 4 MB and photos (3 MB each) upload one at a time.
 - **Backups**: Neon keeps point-in-time history (restore from the Neon console). The admin panel's **Download backup** exports all records as JSON.
 
@@ -42,18 +42,18 @@ npm run build
 
 ## Pages
 
-Home, movies, experience, story, gallery, DPD Café, contact/directions, Hooghly River, advertising, careers, and patron feedback. The homepage movie section is a swipeable carousel with previous/next buttons, keyboard navigation, and all current/upcoming cards. Contact, advertising, DPD Café, careers, and patron feedback each have a dedicated form. Movie language filters and upcoming tabs work; the cinema selector changes live listings and booking destinations. Every booking button, movie card, and showtime opens a District/BookMyShow platform chooser. Photo galleries support a native modal, arrow-key navigation, Escape, and touch controls. Mobile navigation, keyboard focus, reduced-motion preferences, and per-page metadata are included.
+Home, movies, experience, story, gallery, DPD Café, contact/directions, Hooghly River, advertising, careers, and patron feedback. The homepage movie section is a swipeable carousel with previous/next buttons, keyboard navigation, and all current/upcoming cards. Contact, advertising, DPD Café, careers, and patron feedback each have a dedicated form. Movie language filters and upcoming tabs work; the cinema selector changes live listings and booking destinations. Every booking button opens the selected cinema on District; a movie card opens its full showtimes, and every showtime opens seat selection for that show on District. Photo galleries support a native modal, arrow-key navigation, Escape, and touch controls. Mobile navigation, keyboard focus, reduced-motion preferences, and per-page metadata are included.
 
 ## Content and source accuracy
 
 - Source: https://udayancinema.com/, collected 22 September 2026.
 - `research/scraped-content.json` contains page text, links, image origins, and extracted CSS colors. Raw HTML and site styles are retained in `research/`.
-- Now Showing, showtimes, and Coming soon refresh from District's public cinema and upcoming-movies pages. This is public page extraction, not an official API or a live BookMyShow feed.
+- Now Showing, showtimes, and Coming soon refresh from District's public cinema and upcoming-movies pages. This is public page extraction, not an official API.
 - `lib/data.ts` contains the cinema records. Upcoming titles come from District and from titles the cinema adds in the admin panel; they are labelled separately from live show listings.
-- A showtime opens District's own seat selection for that show (from District's page data). BookMyShow links go to the venue and date, where visitors pick the matching show. No invented movie IDs or seat-booking links are used.
+- A showtime opens District's own seat selection for that show (from District's page data). Booking is on District only. No invented movie IDs or seat-booking links are used.
 - Censor ratings, runtimes, release dates, and lowest ticket prices are shown as District publishes them. Seat availability is not shown; prices and seats are confirmed on the booking platform.
 - Careers and patron feedback reproduce the original site’s form fields (the feedback categories are now 1–5 ratings instead of free text). Submissions are handled by this site; nothing redirects to the old WordPress forms.
-- Venue photos and upcoming posters are local copies of the original site’s assets; current posters come from District’s public CDN. Platform logos retain their original artwork: BookMyShow from the original cinema site, and District from its public Organization metadata (`https://b.zmtcdn.com/data/edition_assets/1731516000703.png`). Ownership remains with their respective owners.
+- Venue photos and upcoming posters are local copies of the original site’s assets; current posters come from District’s public CDN. The District logo comes from District's public Organization metadata (`https://b.zmtcdn.com/data/edition_assets/1731516000703.png`). Ownership remains with their respective owners.
 - Fonts: DM Sans and Barlow Condensed, loaded from Google Fonts, with local system fallbacks.
 
 ## Branding
@@ -70,13 +70,13 @@ Exact source values retained in CSS: main red `#BB0504`, accent `#E7000B`, burgu
 
 ## Automatic listings updates
 
-Showtimes and Coming soon come from District's public pages (District has no public API). The feed is refreshed by the scheduled function every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can press **Refresh now** under Now showing or Coming soon, or switch automatic fetching off. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
+Showtimes and Coming soon come from District's public pages (District has no public API). The feed is refreshed by the scheduled function every 15 minutes and whenever a visitor loads showtimes older than 15 minutes; the first request on an empty database waits for the first fetch. Admins can press **Refresh now** under Now showing or Coming soon, or switch automatic fetching off. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
 
 **Showtimes** (`scripts/lib/listings.mjs`):
 
 - Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. The extractor reads `__NEXT_DATA__` without credentials and validates the cinema identity. The main page holds one date; every other date District has opened (`sessionDates`, up to 14) is fetched with `?fromdate=`, three at a time. Dated pages key their schedule by cinema ID plus date (for example `11024262026-11-14`).
 - District sometimes answers a dated request with another date's page. An answer counts only if it contains shows for the requested date; otherwise it is retried twice with a cache-buster, and the date keeps the shows from the last good update (reported on the admin Now showing page).
-- Unzoned District timestamps are UTC and are displayed in Asia/Kolkata. Each show keeps its screen, the lowest seat price, and a District **seat-layout link** that opens seat selection for that exact show. A link is only used when its session ID belongs to that cinema; otherwise the show links to the cinema's District page for that date. On phones, the booking chooser swaps the link at tap time for District's app link (OneLink, `lib/district-link.ts`), which opens the same seat page in the District app or, without the app, on District's website.
+- Unzoned District timestamps are UTC and are displayed in Asia/Kolkata. Shows are grouped one card per film, with 2D/3D and language marked per show. Each show keeps its screen, the lowest seat price, and a District **seat-layout link** that opens seat selection for that exact show. A link is only used when its session ID belongs to that cinema; otherwise the show links to the cinema's District page for that date. On phones, the booking chooser swaps the link at tap time for District's app link (OneLink, `lib/district-link.ts`), which opens the same seat page in the District app or, without the app, on District's website.
 - Each cinema records its own successful-update time. A failed refresh keeps that cinema's last good data and shows an update warning. Expired shows are hidden; data older than 24 hours is not shown as bookable. Admin corrections (hidden titles, renamed titles, replaced posters) are applied when the feed is served. Films with shows before their release date are labelled **Advance booking**.
 
 **Coming soon** (`lib/coming-soon.ts`):

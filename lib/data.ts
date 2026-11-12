@@ -2,7 +2,7 @@
 // and fill any field that has not been saved yet. Keep this module free of runtime imports.
 export type Cinema = {
   id: string; name: string; tagline: string; since: string; address: string; phone: string; parking: string;
-  booking: string; district: string; maps: string; image: string; coordinates: {latitude: number; longitude: number};
+  district: string; maps: string; image: string; coordinates: {latitude: number; longitude: number};
 };
 /** An admin-added Coming soon title. It stays listed until its release date (if given) has passed. */
 export type UpcomingMovie = {id: string; title: string; poster: string; releaseDate?: string; language?: string};
@@ -48,8 +48,8 @@ export const publicContent = ({announcement, contactEmail, cinemas, upcoming, fo
 const withIds = <T extends object>(prefix: string, items: T[]) => items.map((item, index) => ({id: `${prefix}-${index + 1}`, ...item}));
 
 export const cinemas: Cinema[] = [
-  { id: 'sheoraphuli', coordinates: {latitude: 22.774846, longitude: 88.326738}, district: 'https://www.district.in/movies/udayan-cinema-sheoraphuli-in-howrah-CD1102426', name: 'Sheoraphuli', tagline: 'Grand Trunk Road', since: '1946', address: '35, Grand Trunk Road, Sheoraphuli, Hooghly, West Bengal 712223', phone: '7003697009', parking: 'Two-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/hooghly/udayan-cinema-sheoraphuli/buytickets/UCPL/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Sheoraphuli', image: '/images/gallery-2.jpg' },
-  { id: 'tarakeswar', coordinates: {latitude: 22.874893, longitude: 88.012038}, district: 'https://www.district.in/movies/udayan-cinema-tarakeswar-in-hoogly-CD1102427', name: 'Tarakeswar', tagline: 'Silvision Mall', since: '2025', address: '2nd Floor, Silvision Mall, Gure, Tarakeswar, West Bengal 712410', phone: '7679088942', parking: 'Two & four-wheeler parking', booking: 'https://in.bookmyshow.com/cinemas/tarkeshwar/udayan-cinema-tarkeshwar/buytickets/UUCT/', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Tarakeswar', image: '/images/WhatsApp-Image-2025-11-03-at-9.45.01-AM.jpeg' },
+  { id: 'sheoraphuli', coordinates: {latitude: 22.774846, longitude: 88.326738}, district: 'https://www.district.in/movies/udayan-cinema-sheoraphuli-in-howrah-CD1102426', name: 'Sheoraphuli', tagline: 'Grand Trunk Road', since: '1946', address: '35, Grand Trunk Road, Sheoraphuli, Hooghly, West Bengal 712223', phone: '7003697009', parking: 'Two-wheeler parking', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Sheoraphuli', image: '/images/gallery-2.jpg' },
+  { id: 'tarakeswar', coordinates: {latitude: 22.874893, longitude: 88.012038}, district: 'https://www.district.in/movies/udayan-cinema-tarakeswar-in-hoogly-CD1102427', name: 'Tarakeswar', tagline: 'Silvision Mall', since: '2025', address: '2nd Floor, Silvision Mall, Gure, Tarakeswar, West Bengal 712410', phone: '7679088942', parking: 'Two & four-wheeler parking', maps: 'https://www.google.com/maps/search/?api=1&query=Udayan+Cinema+Tarakeswar', image: '/images/WhatsApp-Image-2025-11-03-at-9.45.01-AM.jpeg' },
 ];
 // Titles the cinema adds itself in Admin → Coming soon. District's upcoming releases are added automatically.
 export const upcoming: UpcomingMovie[] = [];
@@ -87,7 +87,7 @@ export const defaultContent: SiteContent = {
     heritageLink: 'Get to know our story',
   },
   pages: {
-    movies: page('Movies & showtimes', 'YOUR NEXT MOVIE STARTS HERE', 'Meet you at the movies.', 'Find a story you’ll love. Choose your cinema above, then browse the latest shows and book on District or BookMyShow.'),
+    movies: page('Movies & showtimes', 'YOUR NEXT MOVIE STARTS HERE', 'Meet you at the movies.', 'Find a story you’ll love. Choose your cinema above, then browse the latest shows and book your seats on District.'),
     experience: page('The Udayan experience', 'BUILT AROUND THE BIG SCREEN', 'Cinema. With all the feels.', 'From the first frame to the final credits, settle into an experience made for movie lovers.'),
     about: page('Our story', 'ENTERTAINING SINCE 27 DECEMBER 1946', 'Generations of movie magic.', 'A family’s vision. A neighbourhood landmark. A love for cinema that keeps growing.'),
     gallery: page('Gallery', 'TAKE A LOOK AROUND', 'Step inside Udayan.', 'The spaces, the seats, and the shared moments that make a trip to the movies special.'),
@@ -121,8 +121,8 @@ export const defaultContent: SiteContent = {
   contact: {
     faqEyebrow: 'BEFORE YOUR VISIT', faqHeading: 'A few helpful details.',
     faq: withIds('faq', [
-      {question: 'How do I book tickets?', answer: 'Select your cinema in the header and choose Book tickets. Choose District or BookMyShow in the booking popup, then select your show and seats on that platform.'},
-      {question: 'Where can I find ticket prices and showtimes?', answer: 'Showtimes here refresh from District. Check District or BookMyShow for final ticket prices and seating availability. They can vary by movie, show, and seat type.'},
+      {question: 'How do I book tickets?', answer: 'Select your cinema in the header, open a movie, and tap a showtime. District opens seat selection for that exact show, where you pay and receive your tickets.'},
+      {question: 'Where can I find ticket prices and showtimes?', answer: 'Showtimes here refresh from District every 15 minutes. Final ticket prices and seat availability are confirmed on District. They can vary by movie, show, and seat type.'},
       {question: 'Is parking available?', answer: 'Sheoraphuli has two-wheeler parking. Tarakeswar has parking for both two-wheelers and four-wheelers.'},
       {question: 'Can I visit DPD Café without a movie ticket?', answer: 'Yes. DPD welcomes visitors with or without a cinema ticket. Contact your chosen venue for the current café menu and offers.'},
     ]),

@@ -42,7 +42,7 @@ export const sections: Section[] = [
   {id: 'home-hero', group: 'Home page', title: 'Hero', description: 'The large photo banner at the top of the home page.', path: ['home'], preview: '/', fields: [
     text('heroEyebrow', 'Small heading', {max: 80}), heading('heroHeading', 'Main heading'), area('heroText', 'Introduction', {max: 300, rows: 2, hint: 'Start a new line for a line break.'}),
     image('heroImage', 'Background photo', 'A wide landscape photo works best. The left side is darkened for the text.'), text('heroImageAlt', 'Photo description', {max: 160}),
-    text('heroButton', 'Main button', {max: 40, hint: 'Opens the booking platform chooser.'}), text('heroLink', 'Secondary link', {max: 40, hint: 'Links to The experience.'}),
+    text('heroButton', 'Main button', {max: 40, hint: 'Opens the selected cinema on District.'}), text('heroLink', 'Secondary link', {max: 40, hint: 'Links to The experience.'}),
     text('heroTagline', 'Bottom line', {max: 80}), text('heroSideLabel', 'Vertical side label', {max: 60}),
   ]},
   {id: 'home-strip', group: 'Home page', title: 'Highlights strip', description: 'The row of icons below the hero.', path: ['home'], preview: '/', fields: [
