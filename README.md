@@ -48,10 +48,10 @@ Home, movies, experience, story, gallery, DPD Café, contact/directions, Hooghly
 
 - Source: https://udayancinema.com/, collected 22 September 2026.
 - `research/scraped-content.json` contains page text, links, image origins, and extracted CSS colors. Raw HTML and site styles are retained in `research/`.
-- Now Showing and showtimes refresh from the two public District cinema pages. This is public page extraction, not an official API or a live BookMyShow feed.
-- `lib/data.ts` contains cinema records and the curated Coming Soon snapshot from the original website; upcoming titles are labelled separately from live show listings.
-- The chooser links to the selected venue/date on District and BookMyShow. Movie/time selections are shown for reference; visitors select the matching show and seats on the provider. No invented movie IDs or seat-booking links are used.
-- Ticket prices, available seats, ratings, runtimes, and upcoming release dates are not invented or represented as live on this site.
+- Now Showing, showtimes, and Coming soon refresh from District's public cinema and upcoming-movies pages. This is public page extraction, not an official API or a live BookMyShow feed.
+- `lib/data.ts` contains the cinema records. Upcoming titles come from District and from titles the cinema adds in the admin panel; they are labelled separately from live show listings.
+- A showtime opens District's own seat selection for that show (from District's page data). BookMyShow links go to the venue and date, where visitors pick the matching show. No invented movie IDs or seat-booking links are used.
+- Censor ratings, runtimes, release dates, and lowest ticket prices are shown as District publishes them. Seat availability is not shown; prices and seats are confirmed on the booking platform.
 - Careers and patron feedback reproduce the original site’s form fields (the feedback categories are now 1–5 ratings instead of free text). Submissions are handled by this site; nothing redirects to the old WordPress forms.
 - Venue photos and upcoming posters are local copies of the original site’s assets; current posters come from District’s public CDN. Platform logos retain their original artwork: BookMyShow from the original cinema site, and District from its public Organization metadata (`https://b.zmtcdn.com/data/edition_assets/1731516000703.png`). Ownership remains with their respective owners.
 - Fonts: DM Sans and Barlow Condensed, loaded from Google Fonts, with local system fallbacks.
@@ -70,13 +70,22 @@ Exact source values retained in CSS: main red `#BB0504`, accent `#E7000B`, burgu
 
 ## Automatic listings updates
 
-Showtimes come from the two public District cinema pages. The feed is refreshed by the scheduled function every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can also press **Refresh now** under Now showing. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
+Showtimes and Coming soon come from District's public pages (District has no public API). The feed is refreshed by the scheduled function every 30 minutes and whenever a visitor loads showtimes older than 30 minutes; the first request on an empty database waits for the first fetch. Admins can press **Refresh now** under Now showing or Coming soon, or switch automatic fetching off. The browser rechecks `/data/live-listings.json` once a minute and when the tab becomes visible.
 
-- Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. Configuration and the extractor live in `scripts/lib/listings.mjs`.
-- The extractor reads `__NEXT_DATA__` from public HTML without credentials, validates the cinema identity, and gathers up to seven available dates. Unzoned District timestamps are interpreted as UTC and displayed in Asia/Kolkata.
-- Each cinema records its own successful-update time. A failed refresh keeps that cinema's last good data and shows an update warning. Expired shows are hidden; data older than 24 hours is not shown as bookable. Admin corrections (hidden titles, renamed titles, replaced posters) are applied when the feed is served.
-- District’s page structure can change. Parser failures are logged and covered by the stale-data UI; maintain the extractor if the source changes. `npm run sync:listings` runs the extractor from the command line without touching the database, and `npm run test:listings` runs the parser regression tests.
-- As of 25 September 2026, District's dated pages (`?fromdate=`) are rendered in the browser and carry no show data. The extractor keeps the main page's shows (usually today's) and records the skipped dates, which the admin Now showing page reports, instead of failing the whole cinema.
+**Showtimes** (`scripts/lib/listings.mjs`):
+
+- Sources: Sheoraphuli `CD1102426`; Tarakeswar `CD1102427`. The extractor reads `__NEXT_DATA__` without credentials and validates the cinema identity. The main page holds one date; every other date District has opened (`sessionDates`, up to 14) is fetched with `?fromdate=`, three at a time. Dated pages key their schedule by cinema ID plus date (for example `11024262026-11-14`).
+- District sometimes answers a dated request with another date's page. An answer counts only if it contains shows for the requested date; otherwise it is retried twice with a cache-buster, and the date keeps the shows from the last good update (reported on the admin Now showing page).
+- Unzoned District timestamps are UTC and are displayed in Asia/Kolkata. Each show keeps its screen, the lowest seat price, and a District **seat-layout link** that opens seat selection for that exact show. A link is only used when its session ID belongs to that cinema; otherwise the show links to the cinema's District page for that date. On phones, the booking chooser swaps the link at tap time for District's app link (OneLink, `lib/district-link.ts`), which opens the same seat page in the District app or, without the app, on District's website.
+- Each cinema records its own successful-update time. A failed refresh keeps that cinema's last good data and shows an update warning. Expired shows are hidden; data older than 24 hours is not shown as bookable. Admin corrections (hidden titles, renamed titles, replaced posters) are applied when the feed is served. Films with shows before their release date are labelled **Advance booking**.
+
+**Coming soon** (`lib/coming-soon.ts`):
+
+- District's upcoming page is requested with a Kolkata `location` cookie (District city 15); without it District returns Delhi NCR's list. It is an all-India list of about 200 films, and a failed fetch keeps the previous list.
+- A District title is shown when its original language (listed first) is one of the chosen languages, or it has a Bengali or English version and that language is chosen, and it releases between today and the window (default Bengali, Hindi, and English; 56 days). This keeps Hindi dubs of South Indian films out. Titles can be hidden individually; a few films list a dub first.
+- Titles added in Admin → Coming soon are always shown until their release date passes, and replace a District entry with the same title. Each cinema's list leaves out titles that cinema already has bookings for, and notes advance bookings open at the other cinema.
+
+District's page structure can change. Parser failures are logged and covered by the stale-data UI; maintain the extractor if the source changes. `npm run sync:listings` runs both extractors from the command line without touching the database, and `npm test` runs the parser regression tests (`tests/listings.test.mjs`, `tests/district.test.mjs`).
 
 ## Nearby cinema selection
 
@@ -86,9 +95,11 @@ A manual cinema choice is remembered on that browser. It takes priority over aut
 
 Run `npm test` to verify nearest-venue calculations, saved preferences, permission failures, and in-flight request handling.
 
-## Collections and header navigation
+## Header, mobile navigation, and collections
 
-The header’s More menu links to Hooghly River, Advertise with Us, Careers, Gallery, and Patron Feedback. All links also appear directly in the mobile menu.
+The header is sticky. At the top of the page it is a flat white bar; once the page scrolls it lifts into a floating frosted-glass capsule (`backdrop-filter`, with an opaque fallback for browsers without it). It keeps a fixed height in the page flow, so the capsule can shrink without shifting the content below. The desktop More menu links to Hooghly River, Advertise with Us, Careers, Gallery, and Patron Feedback.
+
+At 950px and below the menu is a bottom sheet over a dimmed page (Escape and the scrim close it; scrolling behind it is locked). At 650px and below a fixed app-style bottom bar adds Home, Movies, Book (opens the booking chooser), Visit, and Menu, with safe-area padding for notched phones; the header’s hamburger is hidden there. Phone sizes also get 40px+ touch targets, 16px form inputs (so iOS does not zoom), and the cinema picker panel is kept inside the viewport.
 
 `components/document-book.tsx` presents the complete original collections with a page-turn effect, swipe/keyboard navigation, page selection, optional thumbnails, and an enlarged reading dialog. Reduced-motion preferences disable the turn animation. All 59 Hooghly slides and all 19 advertising brochure pages are local assets; `research/collections.json` records their original URLs, checked on 25 September 2026. Advertising rates are reproduced within the original brochure and must be confirmed with the cinema. The career page has its own application form with CV upload (see Forms and email).
 
@@ -128,8 +139,9 @@ Visit `/admin`. The server owner signs in with the login **admin** and `ADMIN_PA
 - **Dashboard**: open and new counts per form, the latest submissions, and email setup warnings for owners.
 - **Submissions**: filter, search, bulk-mark, and export to CSV. Each record has call, WhatsApp, and reply shortcuts, a status, an internal note, the CV download, notification and auto-reply delivery status, a resend option, and (owners and editors only) delete.
 - **Pages & photos** (`lib/content-schema.ts`): every page heading and search description, the home page (hero, highlights strip, section headings, café banner, heritage, search listing), the Experience amenities, the Our story text and timeline, the Contact FAQ, the DPD Café story and photos, the Gallery, the Advertise with us introduction and formats, the **advertising brochure** and **Hooghly River book** (pages, order, titles, page shape, and credit), and the **form choices** (contact topics, advertising formats, café enquiry types). Lists can be added to, reordered, and removed. Photos upload as soon as they are chosen, through `/admin/upload` (signed-in editors and owners only, same-origin only), three at a time with progress; image lists also have **Add several**, which adds one row per file in file-name order. Saving waits for uploads to finish and sends only the file paths. In a book's introduction, `{pages}` is replaced by the current page count. In headings, a new line is a line break and `*words*` are shown in red.
-- **Now showing**: sync status per cinema, **Refresh now**, and per-listing hide, title correction, and poster replacement. Corrections are applied when `/data/live-listings.json` is served, so they survive every refresh.
-- **Coming soon**, **Cinemas** (including each cinema's home-page photo), and **Site details** as before.
+- **Now showing**: the automatic-fetching switch, the last scheduled, visitor, and manual runs, sync status and dates per cinema, **Refresh now**, and per-listing hide, title correction, and poster replacement. Corrections are applied when `/data/live-listings.json` is served, so they survive every refresh.
+- **Coming soon**: District's upcoming list status and **Refresh now**, the languages and how many days ahead to show, hiding individual District titles, and your own titles (title, optional poster, release date, and language).
+- **Cinemas** (including each cinema's home-page photo), and **Site details** as before.
 - **Email**: notification recipients (default and per form), test emails, and an **automatic reply** to visitors who leave an email address. The reply has `{name}`, `{reference}`, and `{form}` placeholders, can be turned on per form, and is sent with reply-to set to the public contact email.
 - **Staff accounts**: add people with a role and temporary password, rename them, change their role, deactivate, reset passwords, or delete. There must always be an active owner. Each person can change their own password under **My account**.
 - **Activity & backup**: a log of every sign-in and change (who, what, when), and a **Download backup** button that exports every record as JSON (Neon's point-in-time restore covers files too).

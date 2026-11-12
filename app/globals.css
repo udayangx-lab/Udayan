@@ -230,3 +230,99 @@ fieldset.form-field[aria-invalid=true] span{border-color:#e2a9a5}
 @media(prefers-reduced-motion:no-preference){.form-success{animation:cinema-dialog-enter 360ms cubic-bezier(.22,1,.36,1)}}
 @media(max-width:950px){.form-section{grid-template-columns:1fr;gap:30px}.form-intro{position:static}}
 @media(max-width:650px){.form-section{margin-top:45px;padding-top:40px}.form-intro h2{font-size:38px}.form-intro>p{font-size:14px}.form-card{padding:22px 16px}.form-grid{grid-template-columns:1fr;gap:18px}.form-field :is(input:not([type=checkbox],[type=radio]),select,textarea){font-size:16px}.form-submit{gap:14px}.form-submit .button{width:100%}.form-success h3{font-size:32px}}
+
+/* Listings details: censor rating and runtime, release dates, advance bookings. */
+.movie-note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.poster-badge.advance{background:var(--red)}
+@media(max-width:650px){.movie-note{font-size:11px}}
+
+/* Floating glass header: a flat white bar at the top of the page that lifts into a frosted capsule once the page scrolls. */
+html{scroll-padding-top:100px}
+/* The header keeps a fixed height in the page flow, so the capsule can shrink and move without shifting the content below. */
+.header{position:sticky;top:0;z-index:30;height:94px;background:transparent;border-bottom:0;padding:0;pointer-events:none}
+.header-bar{position:relative;width:100%;margin-inline:auto;pointer-events:auto;background:rgba(255,255,255,.98);border:1px solid transparent;border-bottom-color:var(--line);border-radius:0;-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);transition:width 340ms cubic-bezier(.22,1,.36,1),border-radius 340ms cubic-bezier(.22,1,.36,1),background-color 260ms ease,border-color 260ms ease,box-shadow 340ms ease,transform 340ms cubic-bezier(.22,1,.36,1)}
+.header-bar:before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0) 48%,rgba(255,255,255,.14));transition:opacity 260ms ease}
+.header-inner{transition:height 340ms cubic-bezier(.22,1,.36,1),width 340ms cubic-bezier(.22,1,.36,1)}
+.brand img{transition:width 340ms cubic-bezier(.22,1,.36,1),height 340ms cubic-bezier(.22,1,.36,1)}
+.header[data-floating="true"] .header-bar{transform:translateY(10px)}
+.header[data-floating="true"] .header-bar{width:min(1328px,calc(100% - 28px));border-radius:22px;background:rgba(255,255,255,.62);border-color:rgba(255,255,255,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.35),0 1px 2px rgba(20,0,0,.05),0 18px 46px -10px rgba(20,0,0,.24)}
+.header[data-floating="true"] .header-bar:before{opacity:1}
+.header[data-floating="true"] .header-inner{height:70px;width:calc(100% - 44px)}
+.header[data-floating="true"] .brand img{width:60px;height:56px}
+.header[data-floating="true"] .desktop-nav a.active:after{bottom:-10px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.header[data-floating="true"] .header-bar{background:rgba(255,255,255,.96)}}
+@media(prefers-reduced-motion:reduce){.header,.header-bar,.header-inner,.brand img{transition:none}}
+@media(max-width:650px){
+ html{scroll-padding-top:84px}
+ .header{height:80px}
+ .header[data-floating="true"] .header-bar{transform:translateY(8px)}
+ .header[data-floating="true"] .header-bar{width:calc(100% - 16px);border-radius:18px}
+ .header[data-floating="true"] .header-inner{height:60px;width:calc(100% - 26px)}
+ .header[data-floating="true"] .brand img{width:50px;height:50px}
+}
+
+/* Menu sheet (950px and below): rises from the bottom of the screen over a dimmed page. */
+.mobile-scrim{display:none}
+@media(max-width:950px){
+ .mobile-scrim:not([hidden]){display:block;position:fixed;inset:0;z-index:33;border:0;padding:0;background:rgba(12,2,2,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:cinema-backdrop-enter 220ms ease}
+ .mobile-menu-shell{position:fixed;left:0;right:0;bottom:0;z-index:34;display:block;grid-template-rows:none;visibility:hidden;transition:visibility 0s linear 300ms}
+ .mobile-menu-shell[data-open="true"]{visibility:visible;transition-delay:0s}
+ .mobile-menu-content{overflow:visible}
+ .mobile-menu-shell .mobile-nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-height:calc(100dvh - 90px);overflow:auto;overscroll-behavior:contain;padding:12px 20px 20px;border:1px solid rgba(255,255,255,.75);border-radius:24px;background:rgba(255,255,255,.93);-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 24px 70px -14px rgba(20,0,0,.4);transform:translateY(18px) scale(.985);opacity:0;transition:opacity 200ms ease,transform 300ms cubic-bezier(.22,1,.36,1)}
+ .mobile-menu-shell[data-open="true"] .mobile-nav{transform:none;opacity:1}
+ .mobile-menu-shell .mobile-nav{width:min(520px,calc(100% - 20px));margin-inline:auto}
+ .mobile-nav-head{display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px}
+ .mobile-nav-head .eyebrow{margin:0}
+ .mobile-nav>a:not(.button){min-height:48px;align-items:center;font-size:15px;font-weight:550}
+ .mobile-nav>a[aria-current="page"]{color:var(--red)}
+ .mobile-nav-cinemas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+ .mobile-nav-cinemas a{display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:12px;color:var(--muted)}
+ .mobile-nav-cinemas a svg{color:var(--red);flex-shrink:0}
+ .mobile-nav-cinemas b{display:block;font-size:13px;font-weight:650;color:var(--ink)}
+ .mobile-nav .button{margin-top:16px;min-height:50px}
+}
+@media(max-width:650px){.mobile-menu-shell .mobile-nav{bottom:calc(78px + env(safe-area-inset-bottom));max-height:calc(100dvh - 150px)}.mobile-nav>a:not(.button){min-height:44px}.mobile-nav .button{display:none}}
+@media(prefers-reduced-motion:reduce){.mobile-scrim:not([hidden]){animation:none}}
+
+/* Bottom navigation on phones. */
+.bottom-nav{display:none}
+@media(max-width:650px){
+ .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:31;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);border-top:1px solid rgba(20,0,0,.07);box-shadow:0 -10px 30px rgba(20,0,0,.06)}
+ .bottom-nav a,.bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:end;gap:4px;min-height:52px;padding:4px 2px 2px;border:0;border-radius:12px;background:transparent;color:#5b5b5b;font-size:10px;font-weight:600;letter-spacing:.2px;line-height:1}
+ .bottom-nav svg{width:22px;height:22px;stroke-width:1.9}
+ .bottom-nav a[aria-current="page"],.bottom-nav button[aria-expanded="true"]{color:var(--red)}
+ .bottom-nav a:focus-visible,.bottom-nav button:focus-visible{outline-offset:-2px}
+ .bottom-nav .bottom-book{color:var(--red)}
+ .bottom-book-ring{display:grid;place-items:center;width:54px;height:54px;margin-top:-24px;border-radius:50%;background:var(--red);color:#fff;border:3px solid #fff;box-shadow:0 8px 22px rgba(187,5,4,.38),inset 0 1px 0 rgba(255,255,255,.4)}
+ .bottom-book-ring svg{width:24px;height:24px}
+ .menu-toggle{display:none}
+ footer{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+ .booking-dialog{max-height:calc(100dvh - 24px)}
+}
+
+/* Phone-friendly sizes: touch targets of at least 40px and inputs that don't trigger zoom on iOS. */
+@media(max-width:650px){
+ .form-field :is(input:not([type=checkbox],[type=radio]),select,textarea){font-size:16px}
+ .show-times{gap:8px}.show-times button{font-size:12px;padding:0 12px;min-height:40px}
+ .show-dates{gap:8px}.show-dates button{min-height:42px;font-size:12px}
+ .movie-tabs button{min-height:46px;padding-bottom:0}
+ .language-filter select{min-height:40px;font-size:12px}
+ .icon-button{width:44px;height:44px}
+ .hero-secondary{padding:10px 0}
+ .text-link{padding-block:6px 7px}
+ .footer-main>div>a:not(.footer-wordmark){margin:0;padding:9px 0;min-height:40px}
+ .footer-cinemas>div>a{min-height:40px;padding:6px 0}
+ .footer-cinemas>div>a:first-child{margin-bottom:0}
+ .breadcrumbs a{padding:8px 0}
+}
+@media(max-width:650px){
+ .cinema-picker-panel{right:0;max-width:calc(100vw - 32px)}
+ .contact-card>a{min-height:40px;align-items:center}
+ .contact-secondary .text-link,.contact-actions .text-link{min-height:40px}
+ .book-enlarge{width:40px;height:40px;justify-content:center;padding:0}
+ .book-thumbnails-toggle,.book-download{min-height:40px;padding:6px 10px}
+ .document-book select{min-height:40px}
+ .form-field input[type=file]{min-height:44px}
+ .form-aside a{display:inline-block;padding:6px 0}
+}
+@media(max-width:650px){.document-book .icon-button{width:44px;height:44px}}
