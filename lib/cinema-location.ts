@@ -16,9 +16,19 @@ export function nearestCinema(latitude: number, longitude: number, venues: Venue
 }
 
 // Coordinates stay in memory. Only an explicitly chosen cinema ID is saved.
-export function createCinemaSelection({venues, geolocation, storage, onChange}: {
+/** Distance between two points in kilometres (haversine). */
+export function distanceKm(from: {latitude: number; longitude: number}, to: {latitude: number; longitude: number}) {
+  const radians = (value: number) => value * Math.PI / 180;
+  const lat = radians(to.latitude - from.latitude), lon = radians(to.longitude - from.longitude);
+  const a = Math.sin(lat / 2) ** 2 + Math.cos(radians(from.latitude)) * Math.cos(radians(to.latitude)) * Math.sin(lon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// `onPosition` receives the visitor's coordinates after a successful location request, for showing distances.
+// They are never stored or sent anywhere.
+export function createCinemaSelection({venues, geolocation, storage, onChange, onPosition}: {
   venues: Venue[]; geolocation?: Pick<Geolocation, 'getCurrentPosition'>;
-  storage?: StorageLike; onChange: (selection: Selection) => void;
+  storage?: StorageLike; onChange: (selection: Selection) => void; onPosition?: (position: {latitude: number; longitude: number}) => void;
 }) {
   let index = 0;
   let generation = 0;
@@ -41,6 +51,7 @@ export function createCinemaSelection({venues, geolocation, storage, onChange}: 
         clearTimeout(timeout);
         const nearest = nearestCinema(position.coords.latitude, position.coords.longitude, venues);
         if (nearest === null) {publish('unavailable'); return;}
+        onPosition?.({latitude: position.coords.latitude, longitude: position.coords.longitude});
         index = nearest;
         // A successful explicit re-detection opts back into automatic selection.
         try {storage?.removeItem(cinemaPreferenceKey);} catch {}

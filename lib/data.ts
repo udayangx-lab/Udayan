@@ -19,8 +19,7 @@ export type PageSlug = typeof pageSlugs[number];
 
 export type HomeContent = {
   seoTitle: string; seoDescription: string;
-  heroEyebrow: string; heroHeading: string; heroText: string; heroImage: string; heroImageAlt: string;
-  heroButton: string; heroLink: string; heroTagline: string; heroSideLabel: string;
+  heroEyebrow: string; heroHeading: string; heroText: string;
   strip: IconItem[];
   moviesEyebrow: string; moviesHeading: string;
   featureEyebrow: string; featureHeading: string; featureText: string; featureImage: string; featureImageAlt: string; featureNote: string; featureButton: string;
@@ -68,10 +67,8 @@ export const defaultContent: SiteContent = {
   home: {
     seoTitle: 'Udayan Cinema | A little closer to the movies',
     seoDescription: 'Experience cinema at Udayan, entertaining since 1946. Explore movies, Dolby 7.1 sound, luxury seating and DPD Café in Sheoraphuli and Tarakeswar.',
-    heroEyebrow: 'THE BIG SCREEN. THE REAL EXPERIENCE.', heroHeading: 'Some stories\ndeserve a\n*bigger screen.*',
-    heroText: 'Feel every moment. Share every emotion.\nMake it a movie day at Udayan.',
-    heroImage: '/images/WhatsApp-Image-2025-11-03-at-9.44.57-AM.jpeg', heroImageAlt: 'Red cinema seats inside Udayan Cinema’s auditorium',
-    heroButton: 'Find your next movie', heroLink: 'Explore Udayan', heroTagline: 'YOUR NEIGHBOURHOOD. YOUR CINEMA.', heroSideLabel: 'SHEORAPHULI & TARAKESWAR',
+    heroEyebrow: 'স্বাগতম', heroHeading: 'Some stories\ndeserve a\n*bigger screen.*',
+    heroText: 'Find your nearest Udayan, pick a show,\nand choose your seats on District.',
     strip: withIds('strip', [{icon: 'projector', text: '2K laser projection'}, {icon: 'sound', text: 'Dolby 7.1 surround'}, {icon: 'seat', text: 'Sit back in luxury'}, {icon: 'coffee', text: 'Good food. Great films.'}]),
     moviesEyebrow: 'LIGHTS DOWN. EXCITEMENT UP.', moviesHeading: 'Your next big-screen escape.',
     featureEyebrow: 'MORE THAN A MOVIE', featureHeading: 'Settle in.\nSwitch off.\n*Feel everything.*',

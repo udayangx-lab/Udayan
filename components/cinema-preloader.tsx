@@ -62,7 +62,7 @@ export function CinemaLoaderProvider({children}: {children: ReactNode}) {
     opening.current = setTimeout(() => {
       shownPhase.current = 'idle';
       setPhase('idle');
-    }, prefersReducedMotion() ? 0 : 480);
+    }, prefersReducedMotion() ? 0 : 860);
   }, []);
 
   const beginNavigation = useCallback(() => {
@@ -127,8 +127,10 @@ export function CinemaLoaderProvider({children}: {children: ReactNode}) {
   return <LoaderContext.Provider value={{isLoading, canReveal: phase !== 'loading', beginNavigation}}>
     <div className="cinema-page" inert={mounted && isLoading} aria-busy={isLoading} data-loader-phase={phase}>{children}</div>
     {isLoading && <div key={sequence} className="cinema-loader" data-phase={phase} data-intro={intro}>
+      <div className="loader-stage" aria-hidden="true"/>
       <div className="loader-curtain loader-curtain-left" aria-hidden="true"/>
       <div className="loader-curtain loader-curtain-right" aria-hidden="true"/>
+      <div className="loader-valance" aria-hidden="true"/>
       <div className="loader-content" aria-hidden="true">
         <div className="loader-brand">UDAYAN<span>C I N E M A</span></div>
         <div className="film-countdown">

@@ -39,11 +39,9 @@ const pageLabels: Record<PageSlug, string> = {
 };
 
 export const sections: Section[] = [
-  {id: 'home-hero', group: 'Home page', title: 'Hero', description: 'The large photo banner at the top of the home page.', path: ['home'], preview: '/', fields: [
-    text('heroEyebrow', 'Small heading', {max: 80}), heading('heroHeading', 'Main heading'), area('heroText', 'Introduction', {max: 300, rows: 2, hint: 'Start a new line for a line break.'}),
-    image('heroImage', 'Background photo', 'A wide landscape photo works best. The left side is darkened for the text.'), text('heroImageAlt', 'Photo description', {max: 160}),
-    text('heroButton', 'Main button', {max: 40, hint: 'Opens the selected cinema on District.'}), text('heroLink', 'Secondary link', {max: 40, hint: 'Links to The experience.'}),
-    text('heroTagline', 'Bottom line', {max: 80}), text('heroSideLabel', 'Vertical side label', {max: 60}),
+  {id: 'home-hero', group: 'Home page', title: 'Hero', description: 'The welcome and booking flow at the top of the home page. The map, steps, and showtimes beside it update automatically.', path: ['home'], preview: '/', fields: [
+    text('heroEyebrow', 'Greeting', {max: 80, hint: 'A word in Bengali (such as স্বাগতম) is shown large; English text is shown as a small heading.'}),
+    heading('heroHeading', 'Main heading'), area('heroText', 'Introduction', {max: 300, rows: 2, hint: 'Start a new line for a line break.'}),
   ]},
   {id: 'home-strip', group: 'Home page', title: 'Highlights strip', description: 'The row of icons below the hero.', path: ['home'], preview: '/', fields: [
     {name: 'strip', label: 'Highlights', kind: 'list', itemLabel: 'Highlight', min: 1, max: 6, fields: [{name: 'icon', label: 'Icon', kind: 'icon'}, text('text', 'Text', {max: 60})]},

@@ -8,16 +8,27 @@ import {createContext, useCallback, useContext, useLayoutEffect, useRef, type Co
 const MotionContext = createContext<((href: string) => boolean) | null>(null);
 const ease = 'cubic-bezier(.22, 1, .36, 1)';
 const revealTargets = [
-  '.hero-content > *', '.page-heading .eyebrow', '.page-heading h1', '.page-heading p',
-  '.experience-strip .container > span', '.section-head', '.movie-toolbar', '.movie-grid:not(.movie-carousel) > .movie-card', '.movie-carousel', '.movie-carousel-controls',
+  '.hero-copy > *', '.hero-card', '.page-heading .eyebrow', '.page-heading h1', '.page-heading p',
+  '.highlights > span', '.section-head', '.movie-toolbar', '.movie-grid:not(.movie-carousel) > .movie-card', '.movie-carousel', '.movie-carousel-controls',
   '.listings-note', '.feature-photo', '.feature-copy > *', '.venue-card',
-  '.cafe-banner .container > div', '.heritage > *', '.wide-photo', '.amenity-grid > article',
+  '.cafe-panel', '.heritage > *', '.wide-photo', '.amenity-grid > article',
   '.inline-cta', '.story-layout > *', '.timeline > article', '.gallery-tile',
-  '.contact-card', '.contact-secondary > div', '.faq > *', '.river-intro > *',
-  '.feedback-panel > *', 'footer .footer-main > div',
+  '.contact-card', '.contact-secondary > div', '.faq > *',
+  'footer .footer-main > div', '.footer-cta > *',
   '.collection-heading', '.document-book', '.advertising-intro > *', '.advertising-formats > article',
   '.career-layout > *', '.career-steps > *', '.form-section > *',
 ].join(',');
+// Photos slide in from the side, cards rise and scale, everything else fades up.
+const fromLeft = '.feature-photo, .story-layout > img, .advertising-intro > img, .career-photo, .heritage-year, .footer-cta > :first-child';
+const fromRight = '.feature-copy > *, .story-layout > .prose, .advertising-intro > .prose, .career-layout > .prose, .heritage > div, .footer-cta > :last-child';
+const lifted = '.hero-card, .venue-card, .amenity-grid > article, .timeline > article, .advertising-formats > article, .gallery-tile, .contact-card, .contact-secondary > div, .movie-grid:not(.movie-carousel) > .movie-card';
+function keyframesFor(element: Element): Keyframe[] {
+  const end = {opacity: 1, transform: 'translate3d(0,0,0) scale(1)'};
+  if (element.matches(fromLeft)) return [{opacity: 0, transform: 'translate3d(-44px,0,0) scale(1)'}, end];
+  if (element.matches(fromRight)) return [{opacity: 0, transform: 'translate3d(44px,0,0) scale(1)'}, end];
+  if (element.matches(lifted)) return [{opacity: 0, transform: 'translate3d(0,28px,0) scale(.95)'}, end];
+  return [{opacity: 0, transform: 'translate3d(0,18px,0) scale(1)'}, end];
+}
 
 export function MotionProvider({children}: {children: ReactNode}) {
   const pathname = usePathname();
@@ -54,10 +65,7 @@ export function MotionProvider({children}: {children: ReactNode}) {
       observer?.unobserve(element);
       if (preference.matches) { finish(element); return; }
       // Keep the prepared state through any stagger; release it atomically at the end.
-      const animation = element.animate(
-        [{opacity: 0, transform: 'translate3d(0,18px,0)'}, {opacity: 1, transform: 'translate3d(0,0,0)'}],
-        {duration: 600, delay: Math.min(order, 3) * 55, easing: ease, fill: 'both'},
-      );
+      const animation = element.animate(keyframesFor(element), {duration: 760, delay: Math.min(order, 4) * 80, easing: ease, fill: 'both'});
       animations.set(element, animation);
       void animation.finished.then(() => finish(element)).catch(() => {});
     }

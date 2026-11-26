@@ -7,12 +7,15 @@ import {MotionProvider} from '@/components/site-motion';
 import DistrictLink from './district-link';
 import {LiveListingsProvider} from './live-listings';
 import {CinemaPicker} from './cinema-picker';
-import {useCinemaLocation} from './use-cinema-location';
+import {useCinemaLocation, type Position} from './use-cinema-location';
+import type {LocationStatus} from '@/lib/cinema-location';
 import {SiteContentProvider, useSiteContent} from './site-content';
 import {nav, moreNav, type PublicContent} from '@/lib/data';
 import HeaderMore from './header-more';
+import ShapeDivider from './shape-divider';
 
-const CinemaContext = createContext({index: 0, setIndex: (_value: number) => {}});
+type CinemaState = {index: number; setIndex: (index: number) => void; status: LocationStatus; locate: () => void; position: Position | null};
+const CinemaContext = createContext<CinemaState>({index: 0, setIndex: () => {}, status: 'idle', locate: () => {}, position: null});
 export const useCinema = () => useContext(CinemaContext);
 
 /** Opens the selected cinema (or the given one) on District, where tickets are booked. */
@@ -51,7 +54,7 @@ function BottomNav({pathname, bookUrl, menuOpen, onMenu}: {pathname: string; boo
 
 export default function SiteShell({content, children}: {content: PublicContent; children: React.ReactNode}) {
   const {cinemas} = content;
-  const {index, setIndex, status, locate} = useCinemaLocation(cinemas);
+  const {index, setIndex, status, locate, position} = useCinemaLocation(cinemas);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const floating = useFloatingHeader();
@@ -65,7 +68,7 @@ export default function SiteShell({content, children}: {content: PublicContent; 
     document.addEventListener('keydown', key);
     return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', key); };
   }, [open]);
-  return <SiteContentProvider content={content}><CinemaContext.Provider value={{index, setIndex}}><LiveListingsProvider><MotionProvider>
+  return <SiteContentProvider content={content}><CinemaContext.Provider value={{index, setIndex, status, locate, position}}><LiveListingsProvider><MotionProvider>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="topbar"><div className="container"><span>{content.announcement}</span><span>{cinemas.map((c, i) => <span key={c.id}>{i > 0 && <i/>}{c.name}</span>)}</span></div></div>
     <header className="header" data-floating={floating}>
@@ -83,6 +86,11 @@ export default function SiteShell({content, children}: {content: PublicContent; 
     </header>
     <main id="main">{children}</main>
     <footer>
+      <ShapeDivider shape="wave" side="top"/>
+      <div className="container footer-cta">
+        <div><span className="eyebrow light">TONIGHT AT UDAYAN</span><h2>Your seat is waiting.</h2><p>Pick a show and choose your seats on District in under a minute.</p></div>
+        <div className="footer-cta-actions"><BookingLink className="button white"><Ticket size={17}/>Book tickets</BookingLink><Link className="button outline-light" href="/movies">Now showing<ArrowUpRight size={17}/></Link></div>
+      </div>
       <div className="container footer-main">
         <div className="footer-brand"><Link href="/" className="footer-wordmark">UDAYAN<span>CINEMA</span></Link><p>Great stories. Shared memories.<br/>Your cinema, since 1946.</p><a href={'mailto:' + content.contactEmail}><Mail size={16}/>{content.contactEmail}</a></div>
         <div><h3>Explore</h3><Link href="/movies">Now showing</Link><a href="/movies?tab=upcoming">Coming soon</a><Link href="/experience">The experience</Link><Link href="/gallery">Gallery</Link><Link href="/hooghly-river">Along the Hooghly</Link></div>
