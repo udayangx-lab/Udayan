@@ -88,7 +88,7 @@ export default function SiteShell({content, children}: {content: PublicContent; 
     <footer>
       <ShapeDivider shape="wave" side="top"/>
       <div className="container footer-cta">
-        <div><span className="eyebrow light">TONIGHT AT UDAYAN</span><h2>Your seat is waiting.</h2><p>Pick a show and choose your seats on District in under a minute.</p></div>
+        <div><span className="eyebrow light">TONIGHT AT UDAYAN</span><h2>Your seat is <span>waiting.</span></h2><p>Pick a show and choose your seats on District in under a minute.</p></div>
         <div className="footer-cta-actions"><BookingLink className="button white"><Ticket size={17}/>Book tickets</BookingLink><Link className="button outline-light" href="/movies">Now showing<ArrowUpRight size={17}/></Link></div>
       </div>
       <div className="container footer-main">

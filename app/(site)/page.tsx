@@ -33,15 +33,20 @@ export default async function Home() {
   const ticker = (hidden: boolean) => <ul className="ticker-list" aria-hidden={hidden || undefined}>
     {[...h.strip, ...h.strip].map((item, i) => <li key={item.id + i}><ContentIcon name={item.icon} aria-hidden="true"/>{item.text}</li>)}
   </ul>;
+  const goldWords = ['Now showing', 'Book on District', ...cinemas.map(c => 'Udayan ' + c.name), 'Since ' + (h.heritageYear || '1946')];
+  const gold = <ul className="ticker-list">{[...goldWords, ...goldWords].map((word, i) => <li key={i}>{word}</li>)}</ul>;
   return <>
     <section className="hero">
       <div className="hero-decor" aria-hidden="true"><span className="hero-orb one"/><span className="hero-orb two"/><span className="hero-grid"/></div>
       <div className="container"><HeroBooking intro={intro} stats={stats}/></div>
     </section>
 
-    <section className="ticker" aria-label="Highlights">
-      <div className="ticker-track">{ticker(false)}{ticker(true)}</div>
-    </section>
+    <div className="ribbons">
+      <div className="ribbon-gold" aria-hidden="true"><div className="ticker-track">{gold}{gold}</div></div>
+      <section className="ticker" aria-label="Highlights">
+        <div className="ticker-track">{ticker(false)}{ticker(true)}</div>
+      </section>
+    </div>
 
     <section className="band band-soft movies-band">
       <ShapeDivider shape="wave" side="top"/>
