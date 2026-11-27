@@ -47,14 +47,15 @@ test('a failed refresh preserves prior successful listings and records failure i
 });
 test('a dated page without show data is retried, then reported without failing the venue', async () => {
   const {indiaDate} = await import('../scripts/lib/listings.mjs');
-  const today = indiaDate(), tomorrow = indiaDate(new Date(Date.now() + 864e5));
+  const now = Date.parse("2026-11-27T09:00:00+05:30");
+  const today = indiaDate(new Date(now)), tomorrow = indiaDate(new Date(now + 864e5));
   const source = sources[0];
-  const later = new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 16);
+  const later = new Date(now + 3 * 3600e3).toISOString().slice(0, 16);
   const state = {meta: {cinema: {id: Number(source.districtId)}}, data: {sessionDates: [today, tomorrow]}, arrangedSessions: [{entityCode: 7, entityName: 'Today film', data: {}, sessions: [{cid: Number(source.districtId), sid: '9', showTime: later, lang: 'Bengali', scrnFmt: '2D'}]}]};
   const main = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({props: {pageProps: {data: {cinemaId: source.districtId, serverState: {[source.districtId]: state}}}}})}</script>`;
   const clientOnly = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({props: {pageProps: {data: {cinemaId: source.districtId, isCSR: true, serverState: {}}}}})}</script>`;
   const requested = [];
-  const result = await collectListings({log: quiet, retryDelayMs: 0, fetchImpl: async url => { requested.push(url); return {ok: true, text: async () => url.includes('fromdate') ? clientOnly : url.includes(source.districtId) ? main : page(sources[1], [])}; }});
+  const result = await collectListings({now, log: quiet, retryDelayMs: 0, fetchImpl: async url => { requested.push(url); return {ok: true, text: async () => url.includes('fromdate') ? clientOnly : url.includes(source.districtId) ? main : page(sources[1], [])}; }});
   const venue = result.venues[source.id];
   assert.equal(venue.error, null);
   assert.equal(venue.movies[0].title, 'Today film');
