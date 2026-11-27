@@ -993,3 +993,10 @@ fieldset.form-field[aria-invalid=true] span{border-color:#E2A9A5}
  .cinema-loader[data-phase="opening"]{display:none}
  .book-turn{display:none}
 }
+
+.back-to-top{position:fixed;left:max(20px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom));z-index:45;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid var(--line-strong);color:var(--red-deep);background:var(--glass);backdrop-filter:var(--blur);box-shadow:var(--glass-shadow)}
+.back-to-top:hover{color:white;background:var(--red)}
+@media(max-width:650px){
+ .back-to-top{left:max(14px,env(safe-area-inset-left));bottom:calc(84px + env(safe-area-inset-bottom))}
+ .assistant-open .back-to-top{display:none}
+}

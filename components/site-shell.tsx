@@ -2,7 +2,7 @@
 import {MotionLink as Link} from '@/components/site-motion';
 import {usePathname} from 'next/navigation';
 import {useEffect, useState, createContext, useContext} from 'react';
-import {ArrowUpRight, Ticket, Menu, X, Phone, Mail, Home, Clapperboard, MapPin} from 'lucide-react';
+import {ArrowUp, ArrowUpRight, Ticket, Menu, X, Phone, Mail, Home, Clapperboard, MapPin} from 'lucide-react';
 import {MotionProvider} from '@/components/site-motion';
 import DistrictLink from './district-link';
 import {LiveListingsProvider} from './live-listings';
@@ -27,17 +27,18 @@ export function BookingLink({children = 'Book tickets', className = 'button red'
 }
 
 /** Whether the page has scrolled far enough for the header to float. A small hysteresis stops it flickering at the edge. */
-function useFloatingHeader() {
+function useScrollControls() {
   const [floating, setFloating] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   useEffect(() => {
     let frame = 0;
-    const update = () => { frame = 0; setFloating(current => window.scrollY > (current ? 6 : 28)); };
+    const update = () => { frame = 0; setFloating(current => window.scrollY > (current ? 6 : 28)); setShowBackToTop(window.scrollY > 320); };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
     window.addEventListener('scroll', onScroll, {passive: true});
     return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); };
   }, []);
-  return floating;
+  return {floating, showBackToTop};
 }
 
 /** App-style navigation along the bottom of phone screens (shown by CSS at 650px and below). */
@@ -57,7 +58,7 @@ export default function SiteShell({content, children}: {content: PublicContent; 
   const {index, setIndex, status, locate, position} = useCinemaLocation(cinemas);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const floating = useFloatingHeader();
+  const {floating, showBackToTop} = useScrollControls();
   useEffect(() => setOpen(false), [pathname]);
   // The menu is a sheet over the page: lock scrolling behind it and let Escape close it.
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function SiteShell({content, children}: {content: PublicContent; 
         </div>
       </div>
     </header>
-    <main id="main">{children}</main>
+    <main id="main" tabIndex={-1}>{children}</main>
     <footer>
       <ShapeDivider shape="wave" side="top"/>
       <div className="container footer-cta">
@@ -111,6 +112,10 @@ export default function SiteShell({content, children}: {content: PublicContent; 
         </nav>
       </div>
     </div>
+    {showBackToTop && !open && <button type="button" className="back-to-top" aria-label="Back to top" title="Back to top" onClick={() => {
+      document.getElementById('main')?.focus({preventScroll: true});
+      window.scrollTo({top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+    }}><ArrowUp size={20} aria-hidden="true"/></button>}
     <BottomNav pathname={pathname} bookUrl={(cinemas[index] || cinemas[0]).district} menuOpen={open} onMenu={() => setOpen(!open)}/>
   </MotionProvider></LiveListingsProvider></CinemaContext.Provider></SiteContentProvider>;
 }
